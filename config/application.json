@@ -3,5 +3,7 @@
     "description": "Torrent",
     "version": "1.0",
     "port": 8080,
-    "log_file": "logs/service.log"
+    "log_file": "service.log",
+    "debug": false,
+    "development": true
 }

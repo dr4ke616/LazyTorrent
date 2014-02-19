@@ -5,14 +5,14 @@ Parsley==1.2
 Twisted==13.2.0
 argparse==1.2.1
 lxml==3.3.1
-mamba-framework==0.3.5
 purl==0.8
 python-dateutil==2.2
 six==1.5.2
-storm==0.20
 transaction==1.4.1
 txsocksx==1.13.0.1
 wsgiref==0.1.2
 zope.component==4.2.0
 zope.event==4.0.2
 zope.interface==4.1.0
+-e git://github.com/PyMamba/mamba-framework.git#egg=mamba-framework
+-e git://github.com/PyMamba/mamba-storm.git#egg=storm
