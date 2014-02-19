@@ -3,8 +3,9 @@ from the_pirate_bay.tpb import ThePirateBay
 
 
 def torrent_callback(torrents):
-    for t in torrents:
-        t.print_torrent()
+    # for t in torrents:
+    #     t.print_torrent()
+    print torrents[0].created
 
 
 def test_pb():

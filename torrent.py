@@ -1,13 +1,14 @@
-# This file is part of torrent
-# Copyright (c) ${year} - adam <adam@localhost>
-
+# This file is part of auto_torrent
+# Copyright (c) 2014 - Adam Drakeford <adamdrakeford@gmail.com>
+# -*- coding: utf-8 -*-
 """
-.. module:: torrent
+.. module:: Auto Torrent Downloader
     :platform: Unix, Windows
-    :synopsis: Torrent
+    :synopsis: Auto Torrent Downloader
 
-.. moduleauthor:: adam <adam@localhost>
+.. moduleauthor:: Adam Drakeford <adamdrakeford@gmail.com>
 """
+
 
 from twisted.web import server
 from twisted.application import service

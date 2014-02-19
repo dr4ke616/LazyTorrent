@@ -61,6 +61,7 @@ class Torrent(object):
         if not self._files:
             path = '/ajax_details_filelist.php?id={id}'.format(id=self.id)
             url = self.url.path(path)
+            print '-->>>', url
             request = urlopen(str(url))
             document = html.parse(request)
             root = document.getroot()

@@ -1,6 +1,6 @@
 {
     "name": "torrent",
-    "description": "Torrent",
+    "description": "Auto Torrent Downloader",
     "version": "1.0",
     "port": 8080,
     "log_file": "service.log",
