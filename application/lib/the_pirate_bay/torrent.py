@@ -17,34 +17,31 @@ class Torrent(object):
     Holder of a single TPB torrent.
     """
 
-    def __init__(self, title, url, category, sub_category, magnet_link,
-                 torrent_link, created, size, user, seeders, leechers):
+    title = None
+    url = None
+    category = None
+    sub_category = None
+    magnet_link = None
+    torrent_link = None
+    size = None
+    user = None
+    seeders = None
+    leechers = None
 
-        # The title of the torrent
-        self.title = title
-        # TPB url for the torrent
-        self.url = url
+    def __init__(self, *args, **kwargs):
+
+        for key, value in kwargs.iteritems():
+            if key == 'created':
+                # Tupple - (Uploaded date, current time)
+                self._created = (value, time.time())
+            else:
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
         self.id = self.url.path_segments()[1]
-        # The main category
-        self.category = category
-        # The sub category
-        self.sub_category = sub_category
-        # Magnet download link
-        self.magnet_link = magnet_link
-        # .torrent download link
-        self.torrent_link = torrent_link
-        # Uploaded date, current time
-        self._created = (created, time.time())
-        # Size of torrent
-        self.size = size
-        # Username of uploader
-        self.user = user
-        # Number of seeders
-        self.seeders = seeders
-        # Number of leechers
-        self.leechers = leechers
         self._info = None
         self._files = {}
+
 
     @property
     def info(self):

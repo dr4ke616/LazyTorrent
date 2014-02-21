@@ -88,6 +88,12 @@ class List(object):
         except IndexError:
             torrent_link = None
 
+        ## Torrent not available, manually create the link
+        if torrent_link is None:
+            link = str(url).split('http://')[1]
+            link = link.replace('/torrent', '')
+            torrent_link = 'http://torrents.{0}.torrent'.format(link)
+
         # Don't need user
         meta_col = cols[1].find('.//font').text_content()
         match = self._meta.match(meta_col)
@@ -100,6 +106,18 @@ class List(object):
         seeders = int(cols[2].text)
         leechers = int(cols[3].text)
 
-        return Torrent(
-            title, url, category, sub_category, magnet_link,
-            torrent_link, created, size, user, seeders, leechers)
+        kwargs = {
+            'title': title,
+            'url': url,
+            'category': category,
+            'sub_category': sub_category,
+            'magnet_link': magnet_link,
+            'torrent_link': torrent_link,
+            'created': created,
+            'size': size,
+            'user': user,
+            'seeders': seeders,
+            'leechers': leechers
+        }
+
+        return Torrent(**kwargs)
