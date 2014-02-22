@@ -22,8 +22,8 @@ from twisted.internet import defer, reactor
 from twisted.python import log
 
 
-class __WebClient__(object):
-    def __init__(self, host, use_tor=True):
+class _WebClient(object):
+    def __init__(self, host, use_tor):
         self._host = str(host)
 
         if use_tor:
@@ -61,8 +61,8 @@ class __WebClient__(object):
 
 class WebClient(object):
 
-    def __init__(self, host):
-        self._web_client = __WebClient__(host, use_tor=True)
+    def __init__(self, host, use_tor=True):
+        self._web_client = _WebClient(host, use_tor)
 
     @defer.inlineCallbacks
     def request_page(self, path):

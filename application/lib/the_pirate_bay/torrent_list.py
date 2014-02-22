@@ -4,7 +4,7 @@ from lxml import html
 from twisted.python import log
 
 from torrent import Torrent
-from ..client import WebClient
+from ..web_client import WebClient
 
 
 class List(object):

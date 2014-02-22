@@ -1,5 +1,6 @@
 
 from the_pirate_bay.tpb import ThePirateBay
+from downloader import Downloader
 
 
 def torrent_callback(torrents):
@@ -15,9 +16,17 @@ def test_pb():
     request.load_torrents(torrent_callback)
 
 
-def main():
-    test_pb()
+def file_created(filename):
+    print 'File Created', filename
 
 
-if __name__ == '__main__':
-    main()
+def test_downlaod():
+
+    file_to_download = {
+        'remote_file': '8472688/Warm.Bodies.2013.720p.WEB-DL.X264-WEBiOS_[PublicHD].torrent',
+        'location': 'Warm.Bodies.torrent'
+    }
+    files = (file_to_download, )
+
+    downloader = Downloader('torrents.thepiratebay.se')
+    downloader.get(files, on_file_created=file_created)
