@@ -42,7 +42,6 @@ class Torrent(object):
         self._info = None
         self._files = {}
 
-
     @property
     def info(self):
         if self._info is None:

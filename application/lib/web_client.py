@@ -21,6 +21,8 @@ from twisted.web.http_headers import Headers
 from twisted.internet import defer, reactor
 from twisted.python import log
 
+from mamba.utils import config
+
 
 class _WebClient(object):
     def __init__(self, host, use_tor):
@@ -61,7 +63,13 @@ class _WebClient(object):
 
 class WebClient(object):
 
-    def __init__(self, host, use_tor=True):
+    def __init__(self, host, use_tor=None):
+
+        if use_tor is None:
+            use_tor = config.Application().use_tor_network
+
+        log.msg('Using TOR network' if use_tor else 'Using standard network')
+
         self._web_client = _WebClient(host, use_tor)
 
     @defer.inlineCallbacks
