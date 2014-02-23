@@ -90,26 +90,22 @@ class TorrentMonitor(borg.Borg):
 
             file_to_get = {
                 'remote_file': remote_file,
-                'location': location
+                'location': location,
+                'id': db_id
             }
             torrent_queue += (file_to_get, )
         else:
-            log.msg('No Torrents found')
+            log.msg('No Torrents found for torrent_queue_id: {}'.format(db_id))
             return
 
         self.downloader.get(
             files_to_download=torrent_queue,
-            on_file_created=self.file_created,
-            queue_id=db_id)
+            on_file_created=self.file_created)
 
-    def file_created(self, filename, queue_id):
-        if queue_id is not None:
-            log.msg('Saved file for torrent_queue_id: {}'.format(queue_id))
-            log.msg('Torrent saved at torrent_queue_id: {}'.format(filename))
-
-            TorrentQueue.update_status(queue_id, 'FOUND')
-        else:
-            log.err('Something seems to have gone wrong')
+    def file_created(self, filename, file_id):
+        log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
+        log.msg('Torrent saved at: {}'.format(filename))
+        TorrentQueue.update_status(file_id, 'FOUND')
 
     def process_error(self, failure):
         log.err(str(failure))

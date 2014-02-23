@@ -17,7 +17,6 @@ class _Queue(object):
     tasks = []
 
     def __init__(self, host, concurrency=0):
-        self.id = None
         self.host = host
         self.concurrency = concurrency
         self.queue_empty = None
@@ -38,7 +37,7 @@ class _Queue(object):
         log.err(str(failure))
         log.err(failure.getTraceback())
 
-    def _process_data(self, response, file_name):
+    def _process_data(self, response, file_name, file_id):
         with open(file_name, 'w') as f:
             f.write(response)
         f.close()
@@ -46,7 +45,7 @@ class _Queue(object):
         if self.on_file_created:
             self.on_file_created(
                 file_name,
-                queue_id=self.id
+                file_id
             )
 
         self.workers -= 1
@@ -69,9 +68,10 @@ class _Queue(object):
         client = task['client']
         path = task['data']['remote_file']
         file_name = task['data']['location']
+        file_id = task['data']['id']
 
         d = client.request_page(path)
-        d.addCallback(self._process_data, file_name)
+        d.addCallback(self._process_data, file_name, file_id)
         d.addErrback(self._process_error)
 
 
@@ -83,7 +83,7 @@ class Downloader(object):
         (with no host). Meaning that only the file names are needed
         in the dictionaries being passed into the get method
         """
-        self.queue = _Queue(host)
+        self.queue = _Queue(host, 100)
         self.path_to_file = None
 
     def get(self, files_to_download, **kwargs):
@@ -97,7 +97,8 @@ class Downloader(object):
             of the file to be downloaded. Example:
             {
                 'remote_file': 'download/file.txt',
-                'location': '/tmp/files/file.txt'
+                'location': '/tmp/files/file.txt',
+                'id': X
             }
         :param queue_empty: callback when queue is empty
         :param on_file_created: callback when file is created.
@@ -106,11 +107,7 @@ class Downloader(object):
         if type(files_to_download) is not tuple:
             raise ValueError('Expected Tupple containing lists')
 
-        self.queue.concurrency = len(files_to_download) + 1
-
-        if 'queue_id' in kwargs:
-            self.queue.id = kwargs['queue_id']
-            del kwargs['queue_id']
+        # self.queue.concurrency = len(files_to_download) + 1
 
         if 'queue_empty' in kwargs:
             self.queue.queue_empty = kwargs['queue_empty']
