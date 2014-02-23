@@ -53,7 +53,7 @@ class TVShow(model.Model, Storm):
 
                 setattr(self, key, value)
 
-    def create(self, force_download):
+    def create(self, download_now):
         query = '{0} S{1}E{2}'.format(
             self.name,
             self.season_number,
@@ -63,7 +63,7 @@ class TVShow(model.Model, Storm):
         queue = TorrentQueue(
             media_type=self.__media_type__,
             query=query,
-            force_download=force_download,
+            download_now=download_now,
             status='PENDING',
             date_added=datetime.now()
         )

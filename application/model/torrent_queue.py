@@ -30,7 +30,7 @@ class TorrentQueue(model.Model, Storm):
         set={'MOVIE', 'TV_SHOW'}, validator=required
     )
     query = Unicode(size=256, validator=required)
-    force_download = Bool(default=True, validator=required)
+    download_now = Bool(default=True, validator=required)
     status = NativeEnum(
         set={'PENDING', 'FOUND', 'FINISHED'}, validator=required
     )
@@ -51,10 +51,10 @@ class TorrentQueue(model.Model, Storm):
         store.commit()
 
     @classmethod
-    def get_queue(cls, force_download):
+    def get_queue(cls, download_now):
         store = cls.database.store()
         result = store.find(
             cls,
-            cls.force_download == force_download
+            cls.download_now == download_now
         )
         return [queue for queue in result]

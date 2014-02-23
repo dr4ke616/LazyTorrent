@@ -34,13 +34,13 @@ class ModelsTestCase(unittest.TestCase):
         params = {
             'media_type': 'MOVIE',
             'query': 'Titanic',
-            'force_download': True,
+            'download_now': True,
             'status': 'PENDING',
             'date_added': datetime.now()
         }
 
         TorrentQueue(**params).create()
-        queue = TorrentQueue.get_queue(force_download=True)
+        queue = TorrentQueue.get_queue(download_now=True)
         self.assertEquals(1, len(queue))
 
     def test_movie(self):
@@ -50,8 +50,8 @@ class ModelsTestCase(unittest.TestCase):
             'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
             'rating': 10
         }
-        Movie(**params).create(force_download=True)
-        queue = TorrentQueue.get_queue(force_download=True)
+        Movie(**params).create(download_now=True)
+        queue = TorrentQueue.get_queue(download_now=True)
         self.assertEquals(1, len(queue))
 
     def test_tv_show(self):
@@ -63,6 +63,6 @@ class ModelsTestCase(unittest.TestCase):
             'episode_name': 'The Walking Dead',
             'rating': 10
         }
-        TVShow(**params).create(force_download=False)
-        queue = TorrentQueue.get_queue(force_download=False)
+        TVShow(**params).create(download_now=False)
+        queue = TorrentQueue.get_queue(download_now=False)
         self.assertEquals(1, len(queue))

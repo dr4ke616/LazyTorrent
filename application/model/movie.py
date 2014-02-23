@@ -51,11 +51,11 @@ class Movie(model.Model, Storm):
 
                 setattr(self, key, value)
 
-    def create(self, force_download):
+    def create(self, download_now):
         queue = TorrentQueue(
             media_type=self.__media_type__,
             query=self.name,
-            force_download=force_download,
+            download_now=download_now,
             status='PENDING',
             date_added=datetime.now()
         )

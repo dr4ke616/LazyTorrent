@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `torrent_queue` (
   `torrent_queue_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `media_type` enum('MOVIE','TV_SHOW') NOT NULL,
   `query` varchar(256) DEFAULT NULL,
-  `force_download` tinyint(1) NOT NULL DEFAULT '1',
+  `download_now` tinyint(1) NOT NULL DEFAULT '1',
   `status` enum('PENDING','FOUND','FINISHED') NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`torrent_queue_id`)
