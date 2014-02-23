@@ -65,11 +65,17 @@ class TVShow(model.Model, Storm):
                 setattr(self, key, value)
 
     def create(self, download_now):
-        query = '{0} S{1}E{2}'.format(
-            self.name,
-            self.season_number,
-            self.episode_number
-        )
+        if self.season_number < 10:
+            sn = '0' + unicode(self.season_number)
+        else:
+            sn = unicode(self.season_number)
+
+        if self.episode_number < 10:
+            en = '0' + unicode(self.episode_number)
+        else:
+            en = unicode(self.episode_number)
+
+        query = '{0} S{1}E{2}'.format(self.name, sn, en)
 
         queue = TorrentQueue(
             media_type=self.__media_type__,

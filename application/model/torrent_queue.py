@@ -66,6 +66,17 @@ class TorrentQueue(model.Model, Storm):
         store = cls.database.store()
         result = store.find(
             cls,
-            cls.download_now == download_now
+            cls.download_now == download_now,
+            cls.status == 'PENDING'
         )
         return [queue for queue in result]
+
+    @classmethod
+    def update_status(cls, torrent_queue_id, status):
+        store = cls.database.store()
+        result = store.find(
+            cls,
+            cls.torrent_queue_id == torrent_queue_id,
+        ).one()
+        result.status = status
+        store.commit()

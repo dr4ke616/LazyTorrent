@@ -20,8 +20,8 @@ class Search(Paginated):
             segments=['query', 'page', 'order', 'category'],
             defaults=[query, str(page), str(order), str(category)])
 
-    def load_torrents(self, callback):
-        super(Search, self).load_torrents(callback)
+    def load_torrents(self, callback, **kwargs):
+        super(Search, self).load_torrents(callback, **kwargs)
 
     def query(self, query=None):
         """

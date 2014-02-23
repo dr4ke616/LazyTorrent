@@ -17,6 +17,7 @@ class _Queue(object):
     tasks = []
 
     def __init__(self, host, concurrency=0):
+        self.id = None
         self.host = host
         self.concurrency = concurrency
         self.queue_empty = None
@@ -43,7 +44,10 @@ class _Queue(object):
         f.close()
 
         if self.on_file_created:
-            self.on_file_created(file_name)
+            self.on_file_created(
+                file_name,
+                queue_id=self.id
+            )
 
         self.workers -= 1
         self.process()
@@ -104,11 +108,17 @@ class Downloader(object):
 
         self.queue.concurrency = len(files_to_download) + 1
 
+        if 'queue_id' in kwargs:
+            self.queue.id = kwargs['queue_id']
+            del kwargs['queue_id']
+
         if 'queue_empty' in kwargs:
             self.queue.queue_empty = kwargs['queue_empty']
+            del kwargs['queue_empty']
 
         if 'on_file_created' in kwargs:
             self.queue.on_file_created = kwargs['on_file_created']
+            del kwargs['on_file_created']
 
         for f in files_to_download:
             if 'remote_file' not in f.keys() or 'location' not in f.keys():

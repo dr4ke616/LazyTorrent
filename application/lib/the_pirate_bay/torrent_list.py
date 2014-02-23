@@ -16,7 +16,7 @@ class List(object):
     _meta = re.compile('Uploaded (.*), Size (.*), ULed by (.*)')
     base_path = ''
 
-    def load_torrents(self, callback):
+    def load_torrents(self, callback, **kwargs):
         """
         Creates an instance of PirateBayClient twisted client.
         sends of request and exeutes callback functions on
@@ -38,7 +38,7 @@ class List(object):
                 self._build_torrent(row)
                 for row in self._get_torrent_rows(document)]
 
-            callback(torrents)
+            callback(torrents, **kwargs)
 
         result = client.request_page(self.url.full_path())
         result.addCallback(_process_torrents)

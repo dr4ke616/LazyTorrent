@@ -65,8 +65,8 @@ class ModelsTestCase(unittest.TestCase):
     def test_tv_show(self):
         params = {
             'name': 'The Walking Dead',
-            'season_number': 1,
-            'episode_number': 13,
+            'season_number': 4,
+            'episode_number': 10,
             'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
             'episode_name': 'The Walking Dead',
             'rating': 10

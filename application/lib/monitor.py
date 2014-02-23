@@ -6,8 +6,6 @@
 .. moduleauthor:: Adam Drakeford <adamdrakeford@gmail.com>
 """
 
-from datetime import datetime
-
 from mamba.utils import borg, config
 from twisted.internet import task
 from twisted.python import log
@@ -15,6 +13,7 @@ from twisted.python import log
 from the_pirate_bay.tpb import ThePirateBay
 from downloader import Downloader
 
+from ..model.torrent_queue import TorrentQueue
 from ..model.tv_show import TVShow
 from ..model.movie import Movie
 
@@ -39,7 +38,7 @@ class TorrentMonitor(borg.Borg):
             self.downloader = Downloader(self.app.pirate_bay['torrent_host'])
 
             self.torrent_loop = task.LoopingCall(
-                self.process_torrent_request
+                self.search_for_torrents
             )
 
             self.update_download_loop = task.LoopingCall(
@@ -66,22 +65,25 @@ class TorrentMonitor(borg.Borg):
         Movie.can_we_download()
         TVShow.can_we_download()
 
-    def process_torrent_request(self):
-        now = datetime.now()
-        log.msg('process_torrent_request {0}'.format(now))
+    def search_for_torrents(self):
+        log.msg('Searching for my torrents')
 
         ## TODO: Check database for new torrent requests
-        torrent_request = True
-        torrent_query = 'The Walking Dead'
+        torrents = TorrentQueue.get_queue(download_now=True)
 
-        if torrent_request:
-            req = self.pirate_bay_client.search(torrent_query)
-            req.load_torrents(callback=self.on_torrents_found)
+        for torrent in torrents:
+            req = self.pirate_bay_client.search(torrent.query)
+            req.load_torrents(
+                callback=self.on_torrents_found,
+                db_id=torrent.torrent_queue_id
+            )
 
-    def on_torrents_found(self, torrents):
+    def on_torrents_found(self, torrents, db_id):
         torrent_queue = tuple()
 
         if len(torrents) > 0:
+            log.msg('Torrent found for torrent_queue_id: {}'.format(db_id))
+
             chunks = torrents[0].torrent_link_chunks
             remote_file = '{}/{}'.format(chunks['id'], chunks['url-title'])
             location = self.app.torrent_destination + chunks['url-title']
@@ -92,13 +94,22 @@ class TorrentMonitor(borg.Borg):
             }
             torrent_queue += (file_to_get, )
         else:
-            print 'No Torrents found'
+            log.msg('No Torrents found')
             return
 
-        self.downloader.get(torrent_queue, on_file_created=self.file_created)
+        self.downloader.get(
+            files_to_download=torrent_queue,
+            on_file_created=self.file_created,
+            queue_id=db_id)
 
-    def file_created(self, filename):
-        print 'Torrent saved at: ', filename
+    def file_created(self, filename, queue_id):
+        if queue_id is not None:
+            log.msg('Saved file for torrent_queue_id: {}'.format(queue_id))
+            log.msg('Torrent saved at torrent_queue_id: {}'.format(filename))
+
+            TorrentQueue.update_status(queue_id, 'FOUND')
+        else:
+            log.err('Something seems to have gone wrong')
 
     def process_error(self, failure):
         log.err(str(failure))
