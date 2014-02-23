@@ -98,6 +98,17 @@ class Torrent(object):
         except:
             return current
 
+    @property
+    def torrent_link_chunks(self):
+        link = self.torrent_link
+        link = link.split('/')
+        return {
+            'url-scheme': link[0] + '//',
+            'host': link[2],
+            'id': link[3],
+            'url-title': link[4]
+        }
+
     def print_torrent(self):
         """
         Print the details of a torrent

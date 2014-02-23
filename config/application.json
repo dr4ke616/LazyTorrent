@@ -6,5 +6,11 @@
     "log_file": "service.log",
     "debug": false,
     "development": true,
-    "use_tor_network": true
+    "use_tor_network": true,
+    "torrent_destination": "/home/adam/Downloads/auto_torrent/",
+    "pirate_bay": {
+        "host": "thepiratebay.se",
+        "torrent_host": "torrents.thepiratebay.se",
+        "frequency": 5.0
+    }
 }

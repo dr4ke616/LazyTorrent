@@ -1,4 +1,3 @@
-
 from the_pirate_bay.tpb import ThePirateBay
 from downloader import Downloader
 
@@ -11,8 +10,8 @@ def torrent_callback(torrents):
 def test_pb():
     pb = ThePirateBay('http://thepiratebay.se')
     # request = pb.recent()
-    # request = pb.search('The Walking Dead')
-    request = pb.top()
+    request = pb.search('The Walking Dead')
+    # request = pb.top()
     request.load_torrents(torrent_callback)
 
 
@@ -22,9 +21,11 @@ def file_created(filename):
 
 def test_downlaod():
 
+# http://torrents.thepiratebay.se/9627612/The.Walking.Dead.S04E10.HDTV.x264-EXCELLENCE.[VTV].mp4.torrent
+
     file_to_download = {
-        'remote_file': '8472688/Warm.Bodies.2013.720p.WEB-DL.X264-WEBiOS_[PublicHD].torrent',
-        'location': 'Warm.Bodies.torrent'
+        'remote_file': '9627612/The.Walking.Dead.S04E10.HDTV.x264-EXCELLENCE.[VTV].mp4.torrent',
+        'location': '/home/adam/Downloads/auto_torrent/The.Walking.Dead.S04E10.HDTV.x264-EXCELLENCE.[VTV].mp4.torrent'
     }
     files = (file_to_download, )
 

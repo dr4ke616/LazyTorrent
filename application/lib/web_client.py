@@ -37,7 +37,7 @@ class _WebClient(object):
 
     def request(self, path):
         url = 'http://{}/{}'.format(self._host, path)
-        log.msg('URL: {}'.format(url))
+        log.msg('Request URL: {}'.format(url))
         headers = Headers({'User-Agent': ['Twisted Web Client']})
 
         d = self._agent.request('GET', url, headers, None)

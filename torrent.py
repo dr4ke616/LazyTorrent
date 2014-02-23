@@ -17,6 +17,7 @@ from mamba import Mamba
 from mamba.web import Page
 
 from application.lib import test
+from application.lib.monitor import TorrentMonitor
 
 
 def MambaApplicationFactory(settings):
@@ -34,6 +35,7 @@ def MambaApplicationFactory(settings):
     mamba_app_site = server.Site(root)
 
     # test.test_pb()
-    test.test_downlaod()
+    # test.test_downlaod()
+    TorrentMonitor()
 
     return mamba_app_site, application
