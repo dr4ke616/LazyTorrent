@@ -15,6 +15,9 @@ from twisted.python import log
 from the_pirate_bay.tpb import ThePirateBay
 from downloader import Downloader
 
+from ..model.tv_show import TVShow
+from ..model.movie import Movie
+
 
 class TorrentMonitor(borg.Borg):
 
@@ -35,10 +38,21 @@ class TorrentMonitor(borg.Borg):
             self.pirate_bay_client = ThePirateBay(host)
             self.downloader = Downloader(self.app.pirate_bay['torrent_host'])
 
-            self.torrent_loop = task.LoopingCall(self.process_torrent_request)
+            self.torrent_loop = task.LoopingCall(
+                self.process_torrent_request
+            )
+
+            self.update_download_loop = task.LoopingCall(
+                self.update_download_flag
+            )
 
             deferreds = [
-                self.torrent_loop.start(self.app.pirate_bay['frequency'])
+                self.torrent_loop.start(
+                    self.app.pirate_bay['get_torrent']
+                ),
+                self.update_download_loop.start(
+                    self.app.pirate_bay['update_download']
+                )
             ]
 
             for d in deferreds:
@@ -46,6 +60,11 @@ class TorrentMonitor(borg.Borg):
 
         if not self.initialized:
             self.initialized = True
+
+    def update_download_flag(self):
+        log.msg('Checking if we can download anything')
+        Movie.can_we_download()
+        TVShow.can_we_download()
 
     def process_torrent_request(self):
         now = datetime.now()

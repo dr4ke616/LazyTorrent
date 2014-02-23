@@ -54,6 +54,14 @@ class ModelsTestCase(unittest.TestCase):
         queue = TorrentQueue.get_queue(download_now=True)
         self.assertEquals(1, len(queue))
 
+        movie = Movie.load(movie_id=1)
+        self.assertEquals(1, len(movie))
+
+        movie = Movie.load_after_dvd_release()
+        self.assertEquals(1, len(movie))
+
+        Movie.can_we_download()
+
     def test_tv_show(self):
         params = {
             'name': 'The Walking Dead',
@@ -64,5 +72,11 @@ class ModelsTestCase(unittest.TestCase):
             'rating': 10
         }
         TVShow(**params).create(download_now=False)
+
         queue = TorrentQueue.get_queue(download_now=False)
         self.assertEquals(1, len(queue))
+
+        tv_shows = TVShow.load(tv_show_id=1)
+        self.assertEquals(1, len(tv_shows))
+
+        TVShow.can_we_download()

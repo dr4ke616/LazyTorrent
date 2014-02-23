@@ -11,6 +11,7 @@
     "pirate_bay": {
         "host": "thepiratebay.se",
         "torrent_host": "torrents.thepiratebay.se",
-        "frequency": 5.0
+        "get_torrent": 30.0,
+        "update_download": 10.0
     }
 }
