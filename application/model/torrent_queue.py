@@ -43,7 +43,7 @@ class TorrentQueue(model.Model, Storm):
     query = Unicode(size=256, validator=required)
     download_now = Bool(default=True, validator=required)
     status = NativeEnum(
-        set={'PENDING', 'FOUND', 'FINISHED'}, validator=required
+        set={'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED'}, validator=required
     )
     date_added = DateTime(validator=required)
 

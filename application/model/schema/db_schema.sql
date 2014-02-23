@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `torrent_queue` (
   `media_type` enum('MOVIE','TV_SHOW') NOT NULL,
   `query` varchar(256) DEFAULT NULL,
   `download_now` tinyint(1) NOT NULL DEFAULT '1',
-  `status` enum('PENDING','FOUND','FINISHED') NOT NULL,
+  `status` enum('PENDING','FOUND','NOT_FOUND','FINISHED') NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`torrent_queue_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;

@@ -30,7 +30,7 @@ class ModelsTestCase(unittest.TestCase):
         store.execute("SET FOREIGN_KEY_CHECKS=1;")
         store.commit()
 
-    def atest_torrent_queue(self):
+    def test_torrent_queue(self):
         params = {
             'media_type': 'MOVIE',
             'query': 'Titanic',
@@ -43,7 +43,7 @@ class ModelsTestCase(unittest.TestCase):
         queue = TorrentQueue.get_queue(download_now=True)
         self.assertEquals(1, len(queue))
 
-    def atest_movie(self):
+    def test_movie(self):
         params = {
             'name': 'Titanic',
             'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
@@ -62,7 +62,7 @@ class ModelsTestCase(unittest.TestCase):
 
         Movie.can_we_download()
 
-    def atest_tv_show(self):
+    def test_tv_show(self):
         params = {
             'name': 'The Walking Dead',
             'season_number': 4,

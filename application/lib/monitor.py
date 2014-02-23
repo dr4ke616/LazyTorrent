@@ -96,6 +96,7 @@ class TorrentMonitor(borg.Borg):
             torrent_queue += (file_to_get, )
         else:
             log.msg('No Torrents found for torrent_queue_id: {}'.format(db_id))
+            TorrentQueue.update_status(db_id, 'NOT_FOUND')
             return
 
         self.downloader.get(
