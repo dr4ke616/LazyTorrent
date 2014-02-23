@@ -43,3 +43,6 @@ pip-log.txt
 log
 logs/*
 *.log
+
+_trial_temp
+_trial_temp/*

@@ -1,0 +1,15 @@
+{
+    "max_threads": 20,
+    "min_threads": 5,
+    "auto_adjust_pool_size": false,
+    "drop_table_behaviours": {
+        "drop_if_exists": false,
+        "restrict": true,
+        "cascade": false
+    },
+    "uri": "mysql://auto_torrent:8zQ2JQpxbpZHpyUv@localhost/auto_torrent",
+    "create_table_behaviours": {
+        "create_table_if_not_exists": true,
+        "drop_table": true
+    }
+}
