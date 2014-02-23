@@ -11,7 +11,18 @@
 
 from mamba.enterprise import Int, DateTime, Storm, NativeEnum, Unicode, Bool
 from mamba.application import model
-from base import required
+
+
+class TorrentQueueModelError(Exception):
+    """Base exception class for model errors
+    """
+
+
+def required(obj, attr, value):
+    if value is None:
+        raise TorrentQueueModelError('{0}: required value'.format(attr))
+
+    return value
 
 
 class TorrentQueue(model.Model, Storm):

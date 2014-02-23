@@ -14,9 +14,20 @@ from datetime import datetime
 from mamba.enterprise import Int, DateTime, Storm, Unicode
 from mamba.application import model
 from storm.references import Reference
-from base import required
 
 from torrent_queue import TorrentQueue
+
+
+class TVShowModelError(Exception):
+    """Base exception class for model errors
+    """
+
+
+def required(obj, attr, value):
+    if value is None:
+        raise TVShowModelError('{0}: required value'.format(attr))
+
+    return value
 
 
 class TVShow(model.Model, Storm):
