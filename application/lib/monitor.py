@@ -31,8 +31,6 @@ class TorrentMonitor(borg.Borg):
     def initialize(self, _=None, force=False):
         if not self.initialized or force:
             host = "http://{}".format(self.app.pirate_bay['host'])
-            print 'Test Host: ', host
-            print 'Is initialized ', self.initialized
 
             self.pirate_bay_client = ThePirateBay(host)
             self.downloader = Downloader(self.app.pirate_bay['torrent_host'])

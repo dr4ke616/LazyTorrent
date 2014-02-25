@@ -132,7 +132,6 @@ class WebService(controller.Controller):
         results = TorrentQueue.load()
         data = []
         for result in results:
-            log.msg(result.query)
             data.append({
                 'torrent_queue_id': result.torrent_queue_id,
                 'media_type': result.media_type,
