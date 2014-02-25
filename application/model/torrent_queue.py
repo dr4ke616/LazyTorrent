@@ -62,6 +62,18 @@ class TorrentQueue(model.Model, Storm):
         store.commit()
 
     @classmethod
+    def load(cls, **kwargs):
+        if 'limit' in kwargs:
+            limit = kwargs['limit']
+            del kwargs['limit']
+        else:
+            limit = 50
+
+        store = cls.database.store()
+        result = store.find(cls, **kwargs)
+        return [queue for queue in result[:limit]]
+
+    @classmethod
     def get_queue(cls, download_now):
         store = cls.database.store()
         result = store.find(
