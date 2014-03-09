@@ -45,12 +45,19 @@ class TorrentMonitor(borg.Borg):
                 self.update_download_flag
             )
 
+            self.retry_download_loop = task.LoopingCall(
+                self.retry_download
+            )
+
             deferreds = [
                 self.torrent_loop.start(
                     self.app.monitor_torrent
                 ),
                 self.update_download_loop.start(
                     self.app.monitor_download
+                ),
+                self.retry_download_loop.start(
+                    self.app.retry_download
                 )
             ]
 
@@ -90,6 +97,10 @@ class TorrentMonitor(borg.Borg):
         log.msg('Checking if we can download anything')
         Movie.can_we_download()
         TVShow.can_we_download()
+
+    def retry_download(self):
+        log.msg('Going to reset the statuses of NO_FOUND items in queue')
+        TorrentQueue.update_bulk_status('NOT_FOUND', 'PENDING')
 
     def search_for_torrents(self):
         log.msg('Searching for my torrents')
@@ -133,7 +144,8 @@ class TorrentMonitor(borg.Borg):
         self.downloader.get(
             files_to_download=torrent_queue,
             on_file_created=self.file_created,
-            errback=self.error_finding_torrents)
+            errback=self.error_finding_torrents
+        )
 
     def error_finding_torrents(self):
         log.msg('Going to try again')

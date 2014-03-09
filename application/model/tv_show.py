@@ -180,4 +180,3 @@ class TVShow(model.Model, Storm):
         tv_shows = TVShow.load_after_air_date()
         for tv_show in tv_shows:
             tv_show.update_download_flag(True)
-

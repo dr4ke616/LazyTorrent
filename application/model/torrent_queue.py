@@ -92,3 +92,14 @@ class TorrentQueue(model.Model, Storm):
         ).one()
         result.status = status
         store.commit()
+
+    @classmethod
+    def update_bulk_status(cls, old_status, new_status):
+        store = cls.database.store()
+        result = store.find(
+            cls,
+            cls.status == old_status,
+        )
+        for r in result:
+            r.status = new_status
+        store.commit()

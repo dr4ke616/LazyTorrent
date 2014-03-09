@@ -9,6 +9,7 @@
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
     "monitor_torrent": 30,
     "monitor_download": 10,
+    "retry_download": 1800,
     "max_retries": 3,
     "pirate_bay_hosts": [
         {
