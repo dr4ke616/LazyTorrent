@@ -9,8 +9,8 @@ class Top(Paginated):
     """
     base_path = '/top'
 
-    def __init__(self, base_url, category='0'):
-        super(Top, self).__init__()
+    def __init__(self, base_url, use_tor, category='0'):
+        super(Top, self).__init__(use_tor=use_tor)
 
         self.url = URL(
             base=base_url,

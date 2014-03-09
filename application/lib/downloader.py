@@ -16,16 +16,18 @@ class _Queue(object):
     workers = 0
     tasks = []
 
-    def __init__(self, host, concurrency=0):
+    def __init__(self, host, use_tor, concurrency=0):
         self.host = host
         self.concurrency = concurrency
         self.queue_empty = None
         self.on_file_created = None
+        self.errback = None
+        self.use_tor = use_tor
 
     def push(self, data):
         self.tasks.append({
             'data': data,
-            'client': WebClient(self.host)
+            'client': WebClient(self.host, self.use_tor)
         })
 
         if len(self.tasks) == self.concurrency:
@@ -37,7 +39,16 @@ class _Queue(object):
         log.err(str(failure))
         log.err(failure.getTraceback())
 
+        if self.errback is not None:
+            self.errback()
+
     def _process_data(self, response, file_name, file_id):
+        if response is None:
+            log.err('No response when downloading file.')
+            if self.errback is not None:
+                self.errback()
+            return
+
         with open(file_name, 'w') as f:
             f.write(response)
         f.close()
@@ -76,14 +87,14 @@ class _Queue(object):
 
 
 class Downloader(object):
-    def __init__(self, host):
+    def __init__(self, host, use_tor):
         """
         The path_to_file variable can set so that if downloading
         multiple files from the same location, you can specify a url
         (with no host). Meaning that only the file names are needed
         in the dictionaries being passed into the get method
         """
-        self.queue = _Queue(host, 100)
+        self.queue = _Queue(host, use_tor, 100)
         self.path_to_file = None
 
     def get(self, files_to_download, **kwargs):
@@ -103,6 +114,7 @@ class Downloader(object):
         :param queue_empty: callback when queue is empty
         :param on_file_created: callback when file is created.
             Path to file passed as paramater
+        :param errback: callback executed when something goes wrong
         """
         if type(files_to_download) is not tuple:
             raise ValueError('Expected Tupple containing lists')
@@ -116,6 +128,10 @@ class Downloader(object):
         if 'on_file_created' in kwargs:
             self.queue.on_file_created = kwargs['on_file_created']
             del kwargs['on_file_created']
+
+        if 'errback' in kwargs:
+            self.queue.errback = kwargs['errback']
+            del kwargs['errback']
 
         for f in files_to_download:
             if 'remote_file' not in f.keys() or 'location' not in f.keys():

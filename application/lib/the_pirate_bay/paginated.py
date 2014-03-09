@@ -11,7 +11,7 @@ class Paginated(List):
         super(Paginated, self).__init__(*args, **kwargs)
         self._multipage = False
 
-    def load_torrents(self, callback, **kwargs):
+    def load_torrents(self, callback, errback, **kwargs):
         if self._multipage:
             # TODO: This needs to be implemented.
             # Logic is: Keep pooling for torrents
@@ -21,7 +21,7 @@ class Paginated(List):
             # call self.next() to go to next page of torrents
             raise NotImplementedError('Multipage not implemented yet')
         else:
-            super(Paginated, self).load_torrents(callback, **kwargs)
+            super(Paginated, self).load_torrents(callback, errback, **kwargs)
 
     def multipage(self):
         """

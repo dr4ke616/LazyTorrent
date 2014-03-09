@@ -16,7 +16,10 @@ class List(object):
     _meta = re.compile('Uploaded (.*), Size (.*), ULed by (.*)')
     base_path = ''
 
-    def load_torrents(self, callback, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self.use_tor = kwargs.get('use_tor', False)
+
+    def load_torrents(self, callback, errback, **kwargs):
         """
         Creates an instance of PirateBayClient twisted client.
         sends of request and exeutes callback functions on
@@ -26,13 +29,19 @@ class List(object):
             objects. The list is empty if no torrents exist
         """
 
-        client = WebClient(self.url.base.host())
+        client = WebClient(self.url.base.host(), self.use_tor)
 
         def _process_error(failure):
             log.err(str(failure))
             log.err(failure.getTraceback())
+            errback()
 
         def _process_torrents(response):
+            if response is None:
+                log.err('No response from Pirate Bay. Trying again')
+                errback()
+                return
+
             document = html.fromstring(response)
             torrents = [
                 self._build_torrent(row)

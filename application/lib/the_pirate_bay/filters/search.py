@@ -11,8 +11,10 @@ class Search(Paginated):
     """
     base_path = '/search'
 
-    def __init__(self, base_url, query, page='0', order='7', category='0'):
-        super(Search, self).__init__()
+    def __init__(
+            self, base_url, use_tor, query, page='0', order='7', category='0'):
+
+        super(Search, self).__init__(use_tor=use_tor)
 
         self.url = URL(
             base=base_url,
@@ -20,8 +22,8 @@ class Search(Paginated):
             segments=['query', 'page', 'order', 'category'],
             defaults=[query, str(page), str(order), str(category)])
 
-    def load_torrents(self, callback, **kwargs):
-        super(Search, self).load_torrents(callback, **kwargs)
+    def load_torrents(self, callback, errback, **kwargs):
+        super(Search, self).load_torrents(callback, errback, **kwargs)
 
     def query(self, query=None):
         """

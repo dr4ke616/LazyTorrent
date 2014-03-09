@@ -9,8 +9,8 @@ class Recent(Paginated):
     """
     base_path = '/recent'
 
-    def __init__(self, base_url, page='0'):
-        super(Recent, self).__init__()
+    def __init__(self, base_url, use_tor, page='0'):
+        super(Recent, self).__init__(use_tor=use_tor)
 
         self.url = URL(
             base=base_url,

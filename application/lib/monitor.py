@@ -20,6 +20,9 @@ from ..model.movie import Movie
 
 class TorrentMonitor(borg.Borg):
 
+    retry_count = 0
+    host_index = 0
+
     def __init__(self):
         super(TorrentMonitor, self).__init__()
         if not hasattr(self, 'initialized'):
@@ -29,11 +32,9 @@ class TorrentMonitor(borg.Borg):
         self.initialize()
 
     def initialize(self, _=None, force=False):
-        if not self.initialized or force:
-            host = "http://{}".format(self.app.pirate_bay['host'])
+        self._initialize_hosts()
 
-            self.pirate_bay_client = ThePirateBay(host)
-            self.downloader = Downloader(self.app.pirate_bay['torrent_host'])
+        if not self.initialized or force:
 
             self.torrent_loop = task.LoopingCall(
                 self.search_for_torrents
@@ -45,10 +46,10 @@ class TorrentMonitor(borg.Borg):
 
             deferreds = [
                 self.torrent_loop.start(
-                    self.app.pirate_bay['get_torrent']
+                    self.app.monitor_torrent
                 ),
                 self.update_download_loop.start(
-                    self.app.pirate_bay['update_download']
+                    self.app.monitor_download
                 )
             ]
 
@@ -58,6 +59,32 @@ class TorrentMonitor(borg.Borg):
         if not self.initialized:
             self.initialized = True
 
+    def _initialize_hosts(self):
+
+        log.msg('Retry count: {}'.format(self.retry_count))
+        max_retries = self.app.max_retries
+
+        if self.retry_count == max_retries or not self.initialized:
+            self.retry_count = 0
+
+            hosts = self.app.pirate_bay_hosts
+
+            host_config = hosts[self.host_index]
+            web_host = "http://{}".format(host_config['host'])
+            torrent_host = host_config['torrent_host']
+            use_tor = host_config['use_tor_network']
+
+            self.pirate_bay_client = ThePirateBay(web_host, use_tor)
+            self.downloader = Downloader(torrent_host, use_tor)
+
+            log.msg('Switching to different host')
+
+            self.host_index += 1
+            if self.host_index == len(hosts):
+                self.host_index = 0
+        else:
+            self.retry_count += 1
+
     def update_download_flag(self):
         log.msg('Checking if we can download anything')
         Movie.can_we_download()
@@ -66,13 +93,13 @@ class TorrentMonitor(borg.Borg):
     def search_for_torrents(self):
         log.msg('Searching for my torrents')
 
-        ## TODO: Check database for new torrent requests
         torrents = TorrentQueue.get_queue(download_now=True)
 
         for torrent in torrents:
             req = self.pirate_bay_client.search(torrent.query)
             req.load_torrents(
                 callback=self.on_torrents_found,
+                errback=self.error_finding_torrents,
                 db_id=torrent.torrent_queue_id
             )
 
@@ -99,13 +126,14 @@ class TorrentMonitor(borg.Borg):
 
         self.downloader.get(
             files_to_download=torrent_queue,
-            on_file_created=self.file_created)
+            on_file_created=self.file_created,
+            errback=self.error_finding_torrents)
+
+    def error_finding_torrents(self):
+        log.msg('Going to try again')
+        self._initialize_hosts()
 
     def file_created(self, filename, file_id):
         log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
         log.msg('Torrent saved at: {}'.format(filename))
         TorrentQueue.update_status(file_id, 'FOUND')
-
-    def process_error(self, failure):
-        log.err(str(failure))
-        log.err(failure.getTraceback())

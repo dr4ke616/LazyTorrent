@@ -6,12 +6,20 @@
     "log_file": "service.log",
     "debug": false,
     "development": true,
-    "use_tor_network": true,
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
-    "pirate_bay": {
-        "host": "thepiratebay.se",
-        "torrent_host": "torrents.thepiratebay.se",
-        "get_torrent": 30.0,
-        "update_download": 10.0
-    }
+    "monitor_torrent": 30,
+    "monitor_download": 10,
+    "max_retries": 3,
+    "pirate_bay_hosts": [
+        {
+            "host": "thepiratebay.se",
+            "torrent_host": "torrents.thepiratebay.se",
+            "use_tor_network": true
+        },
+        {
+            "host": "bayproxy.me",
+            "torrent_host": "torrents.thepiratebay.se",
+            "use_tor_network": false
+        }
+    ]
 }

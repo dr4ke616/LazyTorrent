@@ -22,6 +22,7 @@ from application.model.tv_show import TVShow
 from application.model.movie import Movie
 from application.model.torrent_queue import TorrentQueue
 
+
 class WebService(controller.Controller):
     """
     RESTful API interface controller for Auto Torrent
