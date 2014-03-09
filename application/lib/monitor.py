@@ -11,6 +11,7 @@ from twisted.internet import task
 from twisted.python import log
 
 from the_pirate_bay.tpb import ThePirateBay
+from the_pirate_bay.constants import *
 from downloader import Downloader
 
 from ..model.torrent_queue import TorrentQueue
@@ -96,7 +97,12 @@ class TorrentMonitor(borg.Borg):
         torrents = TorrentQueue.get_queue(download_now=True)
 
         for torrent in torrents:
-            req = self.pirate_bay_client.search(torrent.query)
+            req = self.pirate_bay_client.search(
+                query=torrent.query,
+                order=ORDERS.SEEDERS.DES,
+                category=CATEGORIES.VIDEO.ALL
+            )
+
             req.load_torrents(
                 callback=self.on_torrents_found,
                 errback=self.error_finding_torrents,
