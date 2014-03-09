@@ -11,6 +11,7 @@
 """
 
 import json
+import urllib
 import traceback
 
 from twisted.python import log
@@ -41,89 +42,123 @@ class WebService(controller.Controller):
     def root(self, request, **kwargs):
         return Ok('I am the WebService, hello world!')
 
-    @route('/add/movie', method=['POST', 'GET'])
+    @route('/add/movie', method='POST')
     def add_movie(self, request, **kwargs):
-        """Creates a new movie and adds it to the torrent queue
+        """ Creates a new movie and adds it to the torrent queue
+            JSON Data in the form of:
+            [
+                {
+                    "title": string,
+                    "dvd_release": date object,
+                    "theater_release": date object,
+                    "rating": string,
+                    "download_now": boolean
+                },
+                {
+                    ...
+                }
+            ]
         """
 
-        title = kwargs.get('title')
-        dvd_release = kwargs.get('dvd_release', None)
-        theater_release = kwargs.get('theater_release', None)
-        rating = kwargs.get('rating', None)
-        download_now = kwargs.get('download_now', True)
-
-        check = self._check_args(locals(), ('title'))
-        if check is not None:
-            return Ok(check)
-
-        if type(download_now) == str:
-            download_now = True if download_now.lower() == 'true' else False
-
-        ## TODO:
-        # Convert any date types to date objects
-        # Cast any other appropiate variables
+        ## TODO: This needs to be sent over application/json
+        # header request. Some reason it wouldnt work for me.
+        data = kwargs.get('data')
+        data = urllib.unquote(data).decode('utf8')
+        log.msg('JSON: {}'.format(data))
 
         try:
-            Movie(
-                name=title,
-                dvd_release=dvd_release,
-                theater_release=theater_release,
-                rating=rating).create(download_now=download_now)
-        except Exception as e:
-            msg = 'There was an error adding Movie {}'.format(title)
-            log.err('{}: {}'.format(msg, e))
-            [log.err(line) for line in
-                traceback.format_exc().splitlines()]
-            return InternalServerError(
-                self._generate_response(code=500, message=msg))
+            data = json.loads(data)
+        except ValueError:
+            log.err('Problem with your JSON string')
+            data = {}
+
+        ## Check we have all arguments we need
+        for m in data:
+            check = self._check_args(m, ('title'))
+            if check is not None:
+                return Ok(check)
+
+        count = 0
+        for movie in data:
+            download_now = movie.pop('download_now', True)
+            movie['name'] = movie.pop('title')
+
+            try:
+                count += 1
+                Movie(**movie).create(download_now=download_now)
+            except Exception as e:
+                msg = 'Error adding Movie {}'.format(movie['name'])
+                log.err('{}: {}'.format(msg, e))
+                [log.err(line) for line in
+                    traceback.format_exc().splitlines()]
+                return InternalServerError(
+                    self._generate_response(code=500, message=msg))
 
         return Ok(self._generate_response(
-            code=0, message='{} added to queue'.format(title)))
+            code=0,
+            message='Added {}/{} Movies to queue'.format(count, len(data)))
+        )
 
-    @route('/add/tv_show', method=['POST', 'GET'])
+    @route('/add/tv_show', method='POST')
     def add_tv_show(self, request, **kwargs):
         """Creates a new movie and adds it to the torrent queue
+            JSON Data in the form of:
+            [
+                {
+                    "title": string,
+                    "season_number": int,
+                    "episode_number": int,
+                    "air_date": date object,
+                    "episode_name": string,
+                    "rating": string,
+                    "download_now": boolean
+                },
+                {
+                    ...
+                }
+            ]
         """
 
-        title = kwargs.get('title')
-        season_number = kwargs.get('season')
-        episode_number = kwargs.get('episode')
-        air_date = kwargs.get('air_date', None)
-        episode_name = kwargs.get('episode_name', None)
-        rating = kwargs.get('rating', None)
-        download_now = kwargs.get('download_now', True)
-
-        check = self._check_args(
-            locals(), ('title', 'season_number', 'episode_number')
-        )
-        if check is not None:
-            return Ok(check)
-
-        if type(download_now) == str:
-            download_now = True if download_now.lower() == 'true' else False
-
-        ## TODO:
-        # Convert any date types to date objects
-        # Cast any other appropiate variables
+        ## TODO: This needs to be sent over application/json
+        # header request. Some reason it wouldnt work for me.
+        data = kwargs.get('data')
+        data = urllib.unquote(data).decode('utf8')
+        log.msg('JSON: {}'.format(data))
 
         try:
-            TVShow(
-                name=title,
-                season_number=int(season_number),
-                episode_number=int(episode_number),
-                air_date=air_date,
-                episode_name=episode_name,
-                rating=rating).create(download_now=download_now)
-        except Exception as e:
-            msg = 'There was an error adding TVShow {}'.format(title)
-            log.err('{}: {}'.format(msg, e))
-            [log.err(line) for line in
-                traceback.format_exc().splitlines()]
-            return InternalServerError(
-                self._generate_response(code=500, message=msg))
+            data = json.loads(data)
+        except ValueError:
+            log.err('Problem with your JSON string')
+            data = {}
+
+        ## Check we have all arguments we need
+        for m in data:
+            check = self._check_args(
+                m, ('title', 'season_number', 'episode_number')
+            )
+            if check is not None:
+                return Ok(check)
+
+        count = 0
+        for tv_show in data:
+            download_now = tv_show.pop('download_now', True)
+            tv_show['name'] = tv_show.pop('title')
+
+            try:
+                count += 1
+                TVShow(**tv_show).create(download_now=download_now)
+            except Exception as e:
+                msg = 'Error adding TVShow {}'.format(tv_show['name'])
+                log.err('{}: {}'.format(msg, e))
+                [log.err(line) for line in
+                    traceback.format_exc().splitlines()]
+                return InternalServerError(
+                    self._generate_response(code=500, message=msg))
 
         return Ok(self._generate_response(
-            code=0, message='{} added to queue'.format(title)))
+            code=0,
+            message='Added {}/{} TV shows to queue'.format(count, len(data)))
+        )
 
     @route('/get/queue', method=['POST', 'GET'])
     def get_torrent_queue(self, request, **kwargs):
