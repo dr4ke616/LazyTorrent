@@ -2,7 +2,7 @@
     "name": "torrent",
     "description": "Auto Torrent Downloader",
     "version": "1.0",
-    "port": 8080,
+    "port": 7298,
     "log_file": "service.log",
     "debug": false,
     "development": true,

@@ -13,6 +13,7 @@
 import json
 import urllib
 import traceback
+from dateutil import parser
 
 from twisted.python import log
 from mamba.web.response import Ok, InternalServerError
@@ -82,6 +83,14 @@ class WebService(controller.Controller):
         for movie in data:
             download_now = movie.pop('download_now', True)
             movie['name'] = movie.pop('title')
+            dvd_release = movie.get('dvd_release')
+            theater_release = movie.get('theater_release')
+
+            if dvd_release is not None:
+                movie['dvd_release'] = parser.parse(dvd_release)
+
+            if theater_release is not None:
+                movie['theater_release'] = parser.parse(theater_release)
 
             try:
                 count += 1
@@ -96,7 +105,9 @@ class WebService(controller.Controller):
 
         return Ok(self._generate_response(
             code=0,
-            message='Added {}/{} Movies to queue'.format(count, len(data)))
+            message='Added {} out of {} Movies to queue'.format(
+                count, len(data))
+            )
         )
 
     @route('/add/tv_show', method='POST')
@@ -143,6 +154,10 @@ class WebService(controller.Controller):
         for tv_show in data:
             download_now = tv_show.pop('download_now', True)
             tv_show['name'] = tv_show.pop('title')
+            air_date = tv_show.get('air_date')
+
+            if air_date is not None:
+                tv_show['air_date'] = parser.parse(air_date)
 
             try:
                 count += 1
@@ -157,7 +172,9 @@ class WebService(controller.Controller):
 
         return Ok(self._generate_response(
             code=0,
-            message='Added {}/{} TV shows to queue'.format(count, len(data)))
+            message='Added {} out of {} TV shows to queue'.format(
+                count, len(data))
+            )
         )
 
     @route('/get/queue', method=['POST', 'GET'])
