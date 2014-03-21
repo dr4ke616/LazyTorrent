@@ -110,6 +110,7 @@ class TorrentMonitor(borg.Borg):
         for torrent in torrents:
             req = self.pirate_bay_client.search(
                 query=torrent.query,
+                optimize_query=True,
                 order=ORDERS.SEEDERS.DES,
                 category=CATEGORIES.VIDEO.ALL
             )

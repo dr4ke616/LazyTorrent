@@ -1,6 +1,4 @@
 
-# from .application.lib.paginated import Paginated
-# from .application.lib.utils import URL
 from ..paginated import Paginated
 from ..utils import URL
 
@@ -12,9 +10,13 @@ class Search(Paginated):
     base_path = '/search'
 
     def __init__(
-            self, base_url, use_tor, query, page='0', order='7', category='0'):
+            self, base_url, use_tor, query, optimize_query,
+            page='0', order='7', category='0'):
 
         super(Search, self).__init__(use_tor=use_tor)
+
+        if optimize_query:
+            query = self._optimize_query(query)
 
         self.url = URL(
             base=base_url,
@@ -51,3 +53,11 @@ class Search(Paginated):
         if category is None:
             return int(self.url.category)
         self.url.category = str(category)
+
+    def _optimize_query(self, query):
+        """ This function tries to make the query Pirate Bay friendly.
+            At the moment the function just strips characters that could
+            potentially cause Pirate Bay to return no results.
+        """
+
+        return query.replace('\'', '')

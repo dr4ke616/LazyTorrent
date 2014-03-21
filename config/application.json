@@ -13,14 +13,19 @@
     "max_retries": 3,
     "pirate_bay_hosts": [
         {
-            "host": "thepiratebay.se",
+            "host": "uberproxy.net",
             "torrent_host": "torrents.thepiratebay.se",
-            "use_tor_network": true
+            "use_tor_network": false
         },
         {
             "host": "bayproxy.me",
             "torrent_host": "torrents.thepiratebay.se",
             "use_tor_network": false
+        },
+        {
+            "host": "thepiratebay.se",
+            "torrent_host": "torrents.thepiratebay.se",
+            "use_tor_network": true
         }
     ]
 }

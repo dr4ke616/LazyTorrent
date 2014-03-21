@@ -20,13 +20,16 @@ class ThePirateBay(object):
         """
         return Recent(self.base_url, self.use_tor, page)
 
-    def search(self, query, page=0, order=7, category=0, multipage=False):
+    def search(
+            self, query, optimize_query, page=0,
+            order=7, category=0, multipage=False):
         """
         Searches TPB for query and returns a list of paginated Torrents capable
         of changing query, categories and orders.
         """
         search = Search(
-            self.base_url, self.use_tor, query, page, order, category
+            self.base_url, self.use_tor, query,
+            optimize_query, page, order, category
         )
         if multipage:
             search.multipage()
