@@ -6,9 +6,12 @@
 .. moduleauthor:: Adam Drakeford <adamdrakeford@gmail.com>
 """
 
+import time
+
 from mamba.utils import borg, config
 from twisted.internet import task
 from twisted.python import log
+from zope.component import getUtility
 
 from the_pirate_bay.tpb import ThePirateBay
 from the_pirate_bay.constants import *
@@ -32,10 +35,10 @@ class TorrentMonitor(borg.Borg):
         self.app = config.Application()
         self.initialize()
 
-    def initialize(self, _=None, force=False):
+    def initialize(self):
         self._initialize_hosts()
 
-        if not self.initialized or force:
+        if not self.initialized:
 
             self.torrent_loop = task.LoopingCall(
                 self.search_for_torrents
@@ -62,9 +65,8 @@ class TorrentMonitor(borg.Borg):
             ]
 
             for d in deferreds:
-                d.addErrback(self.initialize)
+                d.addErrback(self._reconnect_stores)
 
-        if not self.initialized:
             self.initialized = True
 
     def _initialize_hosts(self):
@@ -99,7 +101,7 @@ class TorrentMonitor(borg.Borg):
         TVShow.can_we_download()
 
     def retry_download(self):
-        log.msg('Going to reset the statuses of NO_FOUND items in queue')
+        log.msg('Going to reset the statuses of NOT_FOUND items in queue')
         TorrentQueue.update_bulk_status('NOT_FOUND', 'PENDING')
 
     def search_for_torrents(self):
@@ -156,3 +158,34 @@ class TorrentMonitor(borg.Borg):
         log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
         log.msg('Torrent saved at: {}'.format(filename))
         TorrentQueue.update_status(file_id, 'FOUND')
+
+    def _reconnect_stores(self, error):
+        """Reconnect all the stores if there is some problem
+        """
+
+        if error is not None:
+            log.err('Whooops, detected an error with the database:')
+            log.err(error)
+
+        zstorm = getUtility(IZStorm)
+        for name, store in zstorm.iterstores():
+            if error is not None:
+                log.msg('Reconnecting store {}...'.format(name))
+            store.rollback()
+
+        if not self.torrent_loop.running:
+            time.sleep(0.5)
+            d = self.torrent_loop.start(self.app.monitor_torrent)
+            d.addErrback(self._reconnect_stores)
+
+        if not self.update_download_loop.running:
+            time.sleep(0.5)
+            d = self.update_download_loop.start(self.app.monitor_download)
+            d.addErrback(self._reconnect_stores)
+
+        if not self.retry_download_loop.running:
+            time.sleep(0.5)
+            d = self.retry_download_loop.start(self.app.retry_download)
+            d.addErrback(self._reconnect_stores)
+
+        self._initialize_hosts()
