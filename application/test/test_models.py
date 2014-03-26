@@ -30,144 +30,115 @@ class ModelsTestCase(unittest.TestCase):
         store.execute("SET FOREIGN_KEY_CHECKS=1;")
         store.commit()
 
-    def test_torrent_queue(self):
-        params = {
-            'media_type': 'MOVIE',
-            'query': 'Titanic',
-            'download_now': True,
-            'status': 'PENDING',
-            'date_added': datetime.now()
-        }
+    def test_torrent_queue_no_when(self):
+        queue = TorrentQueue()
+        queue.media_type = u'MOVIE'
+        queue.query = u'Titanic'
+        queue.status = u'PENDING'
+        queue.date_added = datetime.now()
+        queue.create()
 
-        TorrentQueue(**params).create()
-        queue = TorrentQueue.get_queue(download_now=True)
+        queue = TorrentQueue.load()
         self.assertEquals(1, len(queue))
 
-    def test_movie(self):
-        params = {
-            'name': 'Titanic',
-            'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
-            'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'rating': 10
-        }
-        Movie(**params).create(download_now=True)
-        queue = TorrentQueue.get_queue(download_now=True)
+    def test_torrent_queue_with_when(self):
+        queue = TorrentQueue()
+        queue.media_type = u'MOVIE'
+        queue.query = u'Titanic'
+        queue.download_when = datetime.now()
+        queue.status = u'PENDING'
+        queue.date_added = datetime.now()
+        queue.create()
+
+        queue = TorrentQueue.load()
+        self.assertEquals(1, len(queue))
+
+    def test_movie_no_when(self):
+        movie = Movie()
+        movie.name = u'Titanic'
+        movie.dvd_release = datetime.strptime('1989-08-17', '%Y-%m-%d')
+        movie.theater_release = datetime.strptime('1989-02-17', '%Y-%m-%d')
+        movie.rating = 9
+        movie.create()
+
+        queue = TorrentQueue.load()
         self.assertEquals(1, len(queue))
 
         movie = Movie.load(movie_id=1)
         self.assertEquals(1, len(movie))
 
-        movie = Movie.load_after_dvd_release()
-        self.assertEquals(1, len(movie))
+    def test_movie_with_when(self):
+        movie = Movie()
+        movie.name = u'Titanic'
+        movie.dvd_release = datetime.strptime('1989-08-17', '%Y-%m-%d')
+        movie.theater_release = datetime.strptime('1989-02-17', '%Y-%m-%d')
+        movie.rating = 9
+        movie.create()
 
-        Movie.can_we_download()
-
-    def test_tv_show(self):
-        params = {
-            'name': 'The Walking Dead',
-            'season_number': 4,
-            'episode_number': 10,
-            'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'episode_name': 'The Walking Dead',
-            'rating': 10
-        }
-        TVShow(**params).create(download_now=False)
-
-        queue = TorrentQueue.get_queue(download_now=False)
+        queue = TorrentQueue.load_pending_queue()
         self.assertEquals(1, len(queue))
 
-        tv_shows = TVShow.load(tv_show_id=1)
-        self.assertEquals(1, len(tv_shows))
+        movie = Movie.load(movie_id=1)
+        self.assertEquals(1, len(movie))
 
-        TVShow.can_we_download()
+    def test_movie_with_when_before_release_date(self):
+        movie = Movie()
+        movie.name = u'Titanic'
+        movie.dvd_release = datetime.strptime('2089-08-17', '%Y-%m-%d')
+        movie.theater_release = datetime.strptime('2089-02-17', '%Y-%m-%d')
+        movie.rating = 9
+        movie.create()
 
-    def test_add_loads(self):
-        tv_params = {
-            'name': 'The Walking Dead',
-            'season_number': 4,
-            'episode_number': 10,
-            'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'episode_name': 'The Walking Dead',
-            'rating': 10
-        }
-        TVShow(**tv_params).create(download_now=False)
+        queue = TorrentQueue.load_pending_queue()
+        self.assertEquals(0, len(queue))
 
-        tv_params = {
-            'name': 'The Walking Dead',
-            'season_number': 4,
-            'episode_number': 9,
-            'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'episode_name': 'The Walking Dead',
-            'rating': 10
-        }
-        TVShow(**tv_params).create(download_now=False)
+        movie = Movie.load(movie_id=1)
+        self.assertEquals(1, len(movie))
 
-        tv_params = {
-            'name': 'The Walking Dead',
-            'season_number': 4,
-            'episode_number': 8,
-            'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'episode_name': 'The Walking Dead',
-            'rating': 10
-        }
-        TVShow(**tv_params).create(download_now=False)
+    def test_tv_show_no_when(self):
+        tv_show = TVShow()
+        tv_show.name = u'The Walking Dead'
+        tv_show.season_number = 4
+        tv_show.episode_number = 10
+        tv_show.air_date = datetime.strptime('1989-08-17', '%Y-%m-%d')
+        tv_show.episode_name = u'TWD'
+        tv_show.rating = 9
+        tv_show.create()
 
-        tv_params = {
-            'name': 'The Walking Dead',
-            'season_number': 4,
-            'episode_number': 7,
-            'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'episode_name': 'The Walking Dead',
-            'rating': 10
-        }
-        TVShow(**tv_params).create(download_now=False)
+        queue = TorrentQueue.load()
+        self.assertEquals(1, len(queue))
 
-        tv_params = {
-            'name': 'The Walking Dead',
-            'season_number': 4,
-            'episode_number': 6,
-            'air_date': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'episode_name': 'The Walking Dead',
-            'rating': 10
-        }
-        TVShow(**tv_params).create(download_now=False)
+        tv_show = TVShow.load(tv_show_id=1)
+        self.assertEquals(1, len(tv_show))
 
-        movie_params = {
-            'name': 'Titanic',
-            'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
-            'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'rating': 10
-        }
-        Movie(**movie_params).create(download_now=False)
+    def test_tv_show_with_when(self):
+        tv_show = TVShow()
+        tv_show.name = u'The Walking Dead'
+        tv_show.season_number = 4
+        tv_show.episode_number = 10
+        tv_show.air_date = datetime.strptime('1989-08-17', '%Y-%m-%d')
+        tv_show.episode_name = u'TWD'
+        tv_show.rating = 9
+        tv_show.create()
 
-        movie_params = {
-            'name': 'Iron Man',
-            'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
-            'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'rating': 10
-        }
-        Movie(**movie_params).create(download_now=False)
+        queue = TorrentQueue.load_pending_queue()
+        self.assertEquals(1, len(queue))
 
-        movie_params = {
-            'name': 'Superman',
-            'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
-            'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'rating': 10
-        }
-        Movie(**movie_params).create(download_now=False)
+        tv_show = TVShow.load(tv_show_id=1)
+        self.assertEquals(1, len(tv_show))
 
-        movie_params = {
-            'name': 'Transformers',
-            'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
-            'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'rating': 10
-        }
-        Movie(**movie_params).create(download_now=False)
+    def test_tv_show_with_when_before_air_date(self):
+        tv_show = TVShow()
+        tv_show.name = u'The Walking Dead'
+        tv_show.season_number = 4
+        tv_show.episode_number = 10
+        tv_show.air_date = datetime.strptime('2089-08-17', '%Y-%m-%d')
+        tv_show.episode_name = u'TWD'
+        tv_show.rating = 9
+        tv_show.create()
 
-        movie_params = {
-            'name': 'Lord of the rings',
-            'dvd_release': datetime.strptime('1989-08-17', '%Y-%m-%d'),
-            'theater_release': datetime.strptime('1990-08-17', '%Y-%m-%d'),
-            'rating': 10
-        }
-        Movie(**movie_params).create(download_now=False)
+        queue = TorrentQueue.load_pending_queue()
+        self.assertEquals(0, len(queue))
+
+        tv_show = TVShow.load(tv_show_id=1)
+        self.assertEquals(1, len(tv_show))

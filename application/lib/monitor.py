@@ -18,8 +18,6 @@ from the_pirate_bay.constants import *
 from downloader import Downloader
 
 from ..model.torrent_queue import TorrentQueue
-from ..model.tv_show import TVShow
-from ..model.movie import Movie
 
 
 class TorrentMonitor(borg.Borg):
@@ -44,10 +42,6 @@ class TorrentMonitor(borg.Borg):
                 self.search_for_torrents
             )
 
-            self.update_download_loop = task.LoopingCall(
-                self.update_download_flag
-            )
-
             self.retry_download_loop = task.LoopingCall(
                 self.retry_download
             )
@@ -55,9 +49,6 @@ class TorrentMonitor(borg.Borg):
             deferreds = [
                 self.torrent_loop.start(
                     self.app.monitor_torrent
-                ),
-                self.update_download_loop.start(
-                    self.app.monitor_download
                 ),
                 self.retry_download_loop.start(
                     self.app.retry_download
@@ -95,21 +86,19 @@ class TorrentMonitor(borg.Borg):
         else:
             self.retry_count += 1
 
-    def update_download_flag(self):
-        log.msg('Checking if we can download anything')
-        Movie.can_we_download()
-        TVShow.can_we_download()
-
     def retry_download(self):
         log.msg('Going to reset the statuses of NOT_FOUND items in queue')
-        TorrentQueue.update_bulk_status('NOT_FOUND', 'PENDING')
+
+        TorrentQueue.update_status(
+            new_status='PENDING', status='NOT_FOUND'
+        )
 
     def search_for_torrents(self):
         log.msg('Searching for my torrents')
 
-        torrents = TorrentQueue.get_queue(download_now=True)
+        queue = TorrentQueue.load_pending_queue()
 
-        for torrent in torrents:
+        for torrent in queue:
             req = self.pirate_bay_client.search(
                 query=torrent.query,
                 optimize_query=True,
@@ -141,7 +130,9 @@ class TorrentMonitor(borg.Borg):
             torrent_queue += (file_to_get, )
         else:
             log.msg('No Torrents found for torrent_queue_id: {}'.format(db_id))
-            TorrentQueue.update_status(db_id, 'NOT_FOUND')
+            TorrentQueue.update_status(
+                new_status='NOT_FOUND', torrent_queue_id=db_id
+            )
             return
 
         self.downloader.get(
@@ -157,7 +148,10 @@ class TorrentMonitor(borg.Borg):
     def file_created(self, filename, file_id):
         log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
         log.msg('Torrent saved at: {}'.format(filename))
-        TorrentQueue.update_status(file_id, 'FOUND')
+
+        TorrentQueue.update_status(
+            new_status='FOUND', torrent_queue_id=file_id
+        )
 
     def _reconnect_stores(self, error):
         """Reconnect all the stores if there is some problem
@@ -176,11 +170,6 @@ class TorrentMonitor(borg.Borg):
         if not self.torrent_loop.running:
             time.sleep(0.5)
             d = self.torrent_loop.start(self.app.monitor_torrent)
-            d.addErrback(self._reconnect_stores)
-
-        if not self.update_download_loop.running:
-            time.sleep(0.5)
-            d = self.update_download_loop.start(self.app.monitor_download)
             d.addErrback(self._reconnect_stores)
 
         if not self.retry_download_loop.running:

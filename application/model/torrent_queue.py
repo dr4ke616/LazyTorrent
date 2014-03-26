@@ -9,20 +9,10 @@
 .. modelauthor:: Adam Drakeford <adam.drakeford@gmail.com>
 """
 
-from mamba.enterprise import Int, DateTime, Storm, NativeEnum, Unicode, Bool
+from datetime import datetime
+
+from mamba.enterprise import Int, DateTime, Storm, NativeEnum, Unicode
 from mamba.application import model
-
-
-class TorrentQueueModelError(Exception):
-    """Base exception class for model errors
-    """
-
-
-def required(obj, attr, value):
-    if value is None:
-        raise TorrentQueueModelError('{0}: required value'.format(attr))
-
-    return value
 
 
 class TorrentQueue(model.Model, Storm):
@@ -34,18 +24,12 @@ class TorrentQueue(model.Model, Storm):
     __storm_table__ = 'torrent_queue'
     __mamba_schema__ = False
 
-    torrent_queue_id = Int(
-        primary=True, size=10, auto_increment=True, validator=required
-    )
-    media_type = NativeEnum(
-        set={'MOVIE', 'TV_SHOW'}, validator=required
-    )
-    query = Unicode(size=256, validator=required)
-    download_now = Bool(default=True, validator=required)
-    status = NativeEnum(
-        set={'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED'}, validator=required
-    )
-    date_added = DateTime(validator=required)
+    torrent_queue_id = Int(primary=True, size=10, auto_increment=True)
+    media_type = NativeEnum(set={'MOVIE', 'TV_SHOW'})
+    query = Unicode(size=256)
+    download_when = DateTime(default=datetime.now())
+    status = NativeEnum(set={'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED'})
+    date_added = DateTime()
 
     def __init__(self, **kwargs):
 
@@ -63,43 +47,25 @@ class TorrentQueue(model.Model, Storm):
 
     @classmethod
     def load(cls, **kwargs):
-        if 'limit' in kwargs:
-            limit = kwargs['limit']
-            del kwargs['limit']
-        else:
-            limit = 50
-
         store = cls.database.store()
         result = store.find(cls, **kwargs)
-        return [queue for queue in result[:limit]]
+        return [queue for queue in result]
 
     @classmethod
-    def get_queue(cls, download_now):
+    def load_pending_queue(cls):
         store = cls.database.store()
         result = store.find(
             cls,
-            cls.download_now == download_now,
+            cls.download_when <= datetime.now(),
             cls.status == 'PENDING'
         )
         return [queue for queue in result]
 
     @classmethod
-    def update_status(cls, torrent_queue_id, status):
+    def update_status(cls, new_status, **kwargs):
         store = cls.database.store()
-        result = store.find(
-            cls,
-            cls.torrent_queue_id == torrent_queue_id,
-        ).one()
-        result.status = status
-        store.commit()
 
-    @classmethod
-    def update_bulk_status(cls, old_status, new_status):
-        store = cls.database.store()
-        result = store.find(
-            cls,
-            cls.status == old_status,
-        )
+        result = store.find(cls, **kwargs)
         for r in result:
             r.status = new_status
         store.commit()

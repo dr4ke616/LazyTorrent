@@ -9,10 +9,10 @@ DROP TABLE IF EXISTS `movies`;
 --
 
 CREATE TABLE IF NOT EXISTS `torrent_queue` (
-  `torrent_queue_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `torrent_queue_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `media_type` enum('MOVIE','TV_SHOW') NOT NULL,
   `query` varchar(256) DEFAULT NULL,
-  `download_now` tinyint(1) NOT NULL DEFAULT '1',
+  `download_when` datetime NOT NULL,
   `status` enum('PENDING','FOUND','NOT_FOUND','FINISHED') NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`torrent_queue_id`)
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS `torrent_queue` (
 --
 
 CREATE TABLE IF NOT EXISTS `tv_shows` (
-  `tv_show_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `torrent_queue_id` int(10) unsigned NOT NULL,
+  `tv_show_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `torrent_queue_id` int(11) unsigned NOT NULL,
   `name` varchar(256) NOT NULL,
   `season_number` int(11) NOT NULL,
   `episode_number` int(11) NOT NULL,
@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS `tv_shows` (
 --
 
 CREATE TABLE IF NOT EXISTS `movies` (
-  `movie_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `torrent_queue_id` int(10) unsigned NOT NULL,
+  `movie_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `torrent_queue_id` int(11) unsigned NOT NULL,
   `name` varchar(256) NOT NULL,
   `dvd_release` datetime DEFAULT NULL,
   `theater_release` datetime DEFAULT NULL,
