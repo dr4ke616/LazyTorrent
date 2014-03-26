@@ -52,7 +52,7 @@ class WebService(controller.Controller):
                     "title": string,
                     "dvd_release": date object,     (optional)
                     "theater_release": date object, (optional)
-                    "rating": string,               (optional)
+                    "rating": int,                  (optional)
                     "download_when": date object    (optional)
                 },
                 {
@@ -62,14 +62,20 @@ class WebService(controller.Controller):
         """
 
         data = kwargs.get('data')
+        if data is None:
+            return Ok(self._generate_response(
+                code=405, message='JSON data needs to be suplied')
+            )
+
         data = urllib.unquote(data).decode('utf8')
         log.msg('JSON: {}'.format(data))
 
         try:
             data = json.loads(data)
-        except ValueError:
-            log.err('Problem with your JSON string')
-            data = {}
+        except:
+            msg = 'Problem with your JSON string'
+            log.err(msg)
+            return Ok(self._generate_response(code=405, message=msg))
 
         ## Check we have all arguments we need
         for m in data:
@@ -84,9 +90,67 @@ class WebService(controller.Controller):
                 return InternalServerError(
                     self._generate_response(code=500, message=error))
 
+        plural = 's' if len(data) > 1 else ''
         return Ok(self._generate_response(
             code=0,
-            message='Added {} Movies to queue'.format(len(data)))
+            message='Added {} Movie{} to queue'.format(len(data), plural))
+        )
+
+    @route('/add/tv_show', method='POST')
+    def add_tv_show(self, request, **kwargs):
+        """Creates a new movie and adds it to the torrent queue
+            JSON Data in the form of:
+            [
+                {
+                    "title": string,
+                    "season_number": int,
+                    "episode_number": int,
+                    "air_date": date object,        (optional)
+                    "episode_name": string,         (optional)
+                    "rating": int,                  (optional)
+                    "download_when": date object    (optional)
+                },
+                {
+                    ...
+                }
+            ]
+        """
+
+        data = kwargs.get('data')
+        if data is None:
+            return Ok(self._generate_response(
+                code=405, message='JSON data needs to be suplied')
+            )
+
+        data = urllib.unquote(data).decode('utf8')
+        log.msg('JSON: {}'.format(data))
+
+        try:
+            data = json.loads(data)
+        except ValueError:
+            msg = 'Problem with your JSON string'
+            log.err(msg)
+            return Ok(self._generate_response(code=405, message=msg))
+
+        ## Check we have all arguments we need
+        for tvs in data:
+            check = self._check_args(
+                tvs, ('title', 'season_number', 'episode_number')
+            )
+            if check is not None:
+                return Ok(check)
+
+        for tv_show in data:
+            error = self._create_tv_show(tv_show)
+
+            if error is not None:
+                return InternalServerError(
+                    self._generate_response(code=500, message=error))
+
+        plural = 's' if len(data) > 1 else ''
+        return Ok(self._generate_response(
+            code=0,
+            message='Added {} TV Show{} to queue'.format(len(data), plural))
         )
 
     def _create_movie(self, movie):
@@ -119,78 +183,34 @@ class WebService(controller.Controller):
         try:
             Movie(**args).create(download_when=download_when)
         except Exception as e:
-            msg = 'Error adding Movie {}'.format(movie['name'])
+            msg = 'Error adding Movie {}'.format(movie['title'])
             log.err('{}: {}'.format(msg, e))
             [log.err(line) for line in
                 traceback.format_exc().splitlines()]
             return msg
 
-    @route('/add/tv_show', method='POST')
-    def add_tv_show(self, request, **kwargs):
-        """Creates a new movie and adds it to the torrent queue
-            JSON Data in the form of:
-            [
-                {
-                    "title": string,
-                    "season_number": int,
-                    "episode_number": int,
-                    "air_date": date object,
-                    "episode_name": string,
-                    "rating": string,
-                    "download_now": boolean
-                },
-                {
-                    ...
-                }
-            ]
+    def _create_tv_show(self, tv_show):
+        """ Creates a TV Show entry in DB.
+            :param tv_show: dict containing tv show data
         """
 
-        ## TODO: This needs to be sent over application/json
-        # header request. Some reason it wouldnt work for me.
-        data = kwargs.get('data')
-        data = urllib.unquote(data).decode('utf8')
-        log.msg('JSON: {}'.format(data))
+        download_when = tv_show.get('download_when')
+        if download_when is not None:
+            download_when = parser.parse(download_when)
+
+        tv_show['name'] = tv_show.pop('title')
+
+        if 'air_date' in tv_show and tv_show['air_date'] is not None:
+            tv_show['air_date'] = parser.parse(tv_show['air_date'])
 
         try:
-            data = json.loads(data)
-        except ValueError:
-            log.err('Problem with your JSON string')
-            data = {}
-
-        ## Check we have all arguments we need
-        for m in data:
-            check = self._check_args(
-                m, ('title', 'season_number', 'episode_number')
-            )
-            if check is not None:
-                return Ok(check)
-
-        count = 0
-        for tv_show in data:
-            download_now = tv_show.pop('download_now', True)
-            tv_show['name'] = tv_show.pop('title')
-            air_date = tv_show.get('air_date')
-
-            if air_date is not None:
-                tv_show['air_date'] = parser.parse(air_date)
-
-            try:
-                count += 1
-                TVShow(**tv_show).create(download_now=download_now)
-            except Exception as e:
-                msg = 'Error adding TVShow {}'.format(tv_show['name'])
-                log.err('{}: {}'.format(msg, e))
-                [log.err(line) for line in
-                    traceback.format_exc().splitlines()]
-                return InternalServerError(
-                    self._generate_response(code=500, message=msg))
-
-        return Ok(self._generate_response(
-            code=0,
-            message='Added {} out of {} TV shows to queue'.format(
-                count, len(data))
-            )
-        )
+            TVShow(**tv_show).create(download_when=download_when)
+        except Exception as e:
+            msg = 'Error adding Movie {}'.format(tv_show['name'])
+            log.err('{}: {}'.format(msg, e))
+            [log.err(line) for line in
+                traceback.format_exc().splitlines()]
+            return msg
 
     @route('/get/queue', method=['POST', 'GET'])
     def get_torrent_queue(self, request, **kwargs):
@@ -204,9 +224,9 @@ class WebService(controller.Controller):
                 'torrent_queue_id': result.torrent_queue_id,
                 'media_type': result.media_type,
                 'query': result.query,
-                'download_now': bool(result.download_now),
+                'download_when': unicode(result.download_now),
                 'status': result.status,
-                'date_added': str(result.date_added)
+                'date_added': unicode(result.date_added)
             })
 
         return Ok(self._generate_response(
@@ -226,6 +246,6 @@ class WebService(controller.Controller):
         for k, v in local.iteritems():
             if k in req_args and v is None:
                 return self._generate_response(
-                    code=1,
+                    code=405,
                     message='{} argument required'.format(k)
                 )
