@@ -165,13 +165,13 @@ class ApiService(controller.Controller):
         download_when = movie.get('download_when')
 
         if dvd_release is not None:
-            dvd_release = parser.parse(dvd_release)
+            dvd_release = parser.parse(dvd_release, ignoretz=True)
 
         if theater_release is not None:
-            theater_release = parser.parse(theater_release)
+            theater_release = parser.parse(theater_release, ignoretz=True)
 
         if download_when is not None:
-            download_when = parser.parse(download_when)
+            download_when = parser.parse(download_when, ignoretz=True)
 
         args = {
             'name': name,
@@ -196,12 +196,14 @@ class ApiService(controller.Controller):
 
         download_when = tv_show.get('download_when')
         if download_when is not None:
-            download_when = parser.parse(download_when)
+            download_when = parser.parse(download_when, ignoretz=True)
 
         tv_show['name'] = tv_show.pop('title')
 
         if 'air_date' in tv_show and tv_show['air_date'] is not None:
-            tv_show['air_date'] = parser.parse(tv_show['air_date'])
+            tv_show['air_date'] = parser.parse(
+                tv_show['air_date'], ignoretz=True
+            )
 
         try:
             TVShow(**tv_show).create(download_when=download_when)
