@@ -73,7 +73,6 @@ class TVShow(model.Model, Storm):
 
         query = '{0} S{1}E{2}'.format(self.name, sn, en)
 
-        print('TIME: {}'.format(download_when))
         self.torrent_queue_id = self._add_to_queue(download_when, query)
 
         store = self.database.store()
