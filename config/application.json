@@ -7,7 +7,7 @@
     "debug": false,
     "development": false,
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
-    "monitor_torrent": 30,
+    "monitor_torrent": 15,
     "retry_download": 1800,
     "max_retries": 3,
     "pirate_bay_hosts": [

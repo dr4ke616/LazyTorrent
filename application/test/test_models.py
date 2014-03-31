@@ -9,13 +9,14 @@
 .. modelauthor:: Adam Drakeford <adam.drakeford@gmail.com>
 """
 
-from datetime import datetime
-
+import os
 import unittest
 
-from ..model.torrent_queue import TorrentQueue
-from ..model.tv_show import TVShow
-from ..model.movie import Movie
+from datetime import datetime
+
+from application.model.movie import Movie
+from application.model.tv_show import TVShow
+from application.model.torrent_queue import TorrentQueue
 
 
 class ModelsTestCase(unittest.TestCase):
@@ -23,11 +24,8 @@ class ModelsTestCase(unittest.TestCase):
     def setUp(self):
         ## Tear down databse and create schema
         store = TorrentQueue.database.store()
-        store.execute("SET FOREIGN_KEY_CHECKS=0;")
-        store.execute("TRUNCATE TABLE torrent_queue;")
-        store.execute("TRUNCATE TABLE movies;")
-        store.execute("TRUNCATE TABLE tv_shows;")
-        store.execute("SET FOREIGN_KEY_CHECKS=1;")
+        sql = self._load_sql_schema()
+        store.execute(sql)
         store.commit()
 
     def test_torrent_queue_no_when(self):
@@ -142,3 +140,11 @@ class ModelsTestCase(unittest.TestCase):
 
         tv_show = TVShow.load(tv_show_id=1)
         self.assertEquals(1, len(tv_show))
+
+    def _load_sql_schema(slef):
+        path = os.path.dirname(os.path.realpath(__file__))
+        with open(path + '/../model/schema/db_schema.sql', 'r') as f:
+            content = f.read()
+            f.close()
+
+        return content

@@ -8,22 +8,22 @@
 
 import time
 
-from mamba.utils import borg, config
-from twisted.internet import task
 from twisted.python import log
+from twisted.internet import task
+from mamba.utils import borg, config
 from zope.component import getUtility
 
-from the_pirate_bay.tpb import ThePirateBay
-from the_pirate_bay.constants import *
 from downloader import Downloader
+from the_pirate_bay.constants import *
+from the_pirate_bay.tpb import ThePirateBay
 
-from ..model.torrent_queue import TorrentQueue
+from application.model.torrent_queue import TorrentQueue
 
 
 class TorrentMonitor(borg.Borg):
 
-    retry_count = 0
     host_index = 0
+    retry_count = 0
 
     def __init__(self):
         super(TorrentMonitor, self).__init__()
