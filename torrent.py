@@ -16,7 +16,6 @@ from twisted.application import service
 from mamba import Mamba
 from mamba.web import Page
 
-from application.lib import test
 from application.lib.monitor import TorrentMonitor
 
 
@@ -34,8 +33,6 @@ def MambaApplicationFactory(settings):
     # create the site
     mamba_app_site = server.Site(root)
 
-    # test.test_pb()
-    # test.test_downlaod()
     TorrentMonitor()
 
     return mamba_app_site, application
