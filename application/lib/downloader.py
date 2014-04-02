@@ -35,12 +35,12 @@ class _Queue(object):
             return
         self.process()
 
-    def _process_error(self, failure):
+    def _process_error(self, failure, file_name, file_id):
         log.err(str(failure))
         log.err(failure.getTraceback())
 
         if self.errback is not None:
-            self.errback()
+            self.errback(file_name, file_id)
 
     def _process_data(self, response, file_name, file_id):
         if response is None:
@@ -54,10 +54,7 @@ class _Queue(object):
         f.close()
 
         if self.on_file_created:
-            self.on_file_created(
-                file_name,
-                file_id
-            )
+            self.on_file_created(file_name, file_id)
 
         self.workers -= 1
         self.process()
@@ -83,7 +80,7 @@ class _Queue(object):
 
         d = client.request_page(path)
         d.addCallback(self._process_data, file_name, file_id)
-        d.addErrback(self._process_error)
+        d.addErrback(self._process_error, file_name, file_id)
 
 
 class Downloader(object):

@@ -28,10 +28,17 @@ class TorrentQueue(model.Model, Storm):
     media_type = NativeEnum(set={'MOVIE', 'TV_SHOW'})
     query = Unicode(size=256)
     download_when = DateTime(default=datetime.now())
-    status = NativeEnum(set={'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED'})
-    date_added = DateTime()
+    status = NativeEnum(
+        set={
+            'PENDING', 'FOUND', 'NOT_FOUND',
+            'FINISHED', 'DOWNLOADING', 'WATCHED'
+        }
+    )
+    date_added = DateTime(default=None)
+    torrent_hash = Unicode(size=256, default=None)
 
     def __init__(self, **kwargs):
+        super(TorrentQueue, self).__init__()
 
         for key, value in kwargs.iteritems():
             if hasattr(self, key):
@@ -44,6 +51,23 @@ class TorrentQueue(model.Model, Storm):
         store = self.database.store()
         store.add(self)
         store.commit()
+
+    def update_value(self, **kwargs):
+
+        result = TorrentQueue.find(
+            TorrentQueue.torrent_queue_id == self.torrent_queue_id,
+            async=False
+        ).one()
+
+        for key, value in kwargs.iteritems():
+            if hasattr(result, key):
+                if type(value) == str:
+                    value = unicode(value)
+
+                setattr(result, key, value)
+
+        result.update()
+        self = result
 
     @classmethod
     def load(cls, **kwargs):

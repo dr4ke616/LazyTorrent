@@ -5,9 +5,10 @@
     "port": 7298,
     "log_file": "service.log",
     "debug": false,
-    "development": false,
+    "development": true,
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
     "monitor_torrent": 15,
+    "torrent_progress": 10,
     "retry_download": 1800,
     "max_retries": 3,
     "pirate_bay_hosts": [
@@ -26,5 +27,11 @@
             "torrent_host": "torrents.thepiratebay.se",
             "use_tor_network": true
         }
-    ]
+    ],
+   "transmission_client": {
+        "host": "localhost",
+        "port": 9091,
+        "username": "",
+        "password": ""
+    }
 }
