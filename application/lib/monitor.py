@@ -147,7 +147,7 @@ class TorrentMonitor(borg.Borg):
         """
 
         if error is not None:
-            log.err('Whooops, detected an error with the database:')
+            log.err('Whooops, detected an error:')
             log.err(error)
 
         zstorm = getUtility(IZStorm)

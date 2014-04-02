@@ -6,6 +6,7 @@
 .. moduleauthor:: Adam Drakeford <adamdrakeford@gmail.com>
 """
 
+import traceback
 import transmissionrpc
 
 from twisted.python import log
@@ -13,6 +14,28 @@ from mamba.utils import config
 
 from downloader import Downloader
 from application.model.torrent_queue import TorrentQueue
+
+
+def check_connection(func):
+
+    def wrapper(*args, **kwargs):
+        transmission_wrap = args[0]
+
+        log.msg(
+            'Testing connection to Transmission. Active: {}'
+            .format(transmission_wrap.is_active)
+        )
+
+        try:
+            if transmission_wrap.is_active:
+                transmission_wrap._ping()
+        except transmissionrpc.TransmissionError:
+            log.msg('Lost connection to Transmission.')
+            transmission_wrap.is_active = False
+
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class DownloadManager(object):
@@ -106,6 +129,19 @@ class DownloadManager(object):
 
             try:
                 torrent = self.transmission.get_torrent(tq.torrent_hash)
+
+                if torrent is None:
+                    if self.transmission.is_active is False:
+                        # Connection to Transmission has gone away.
+                        # Setting state of torrent queue so that the torrent
+                        # file can be downloaded manually
+
+                        tq.torrent_hash = None
+                        tq.status = u'PENDING'
+                        tq.update()
+
+                    continue
+
             except ValueError:
                 # The torrent hasnt started downloading on client just yet.
                 # We'll check again later
@@ -115,6 +151,9 @@ class DownloadManager(object):
                     'Unhandled error with torrent {}: {}'
                     .format(tq.torrent_hash, error)
                 )
+                [log.err(line) for line in
+                    traceback.format_exc().splitlines()]
+                return
 
             if torrent.status == 'downloading' and tq.status == 'FOUND':
 
@@ -175,23 +214,35 @@ class TransmissionWrapper(object):
         except:
             self.is_active = False
 
+    @check_connection
     def remove_torrent_from_client(self, torrent_id, stop=False):
         """ Removes torrent from client """
+
+        if not self.is_active:
+            return
 
         if stop:
             self.stop_torrent(torrent_id)
 
         return self.client.remove_torrent(torrent_id)
 
+    @check_connection
     def get_torrent(self, torrent_id):
         """ Returns a single torrent object """
 
+        if not self.is_active:
+            return
+
         return self.client.get_torrent(torrent_id)
 
+    @check_connection
     def get_torrents(self, torrent_ids=None):
         """ Returns list of torrent objects
             :param: list containing torrent_ids
         """
+
+        if not self.is_active:
+            return
 
         if not torrent_ids:
             return self.client.get_torrents()
@@ -208,7 +259,16 @@ class TransmissionWrapper(object):
 
         return None
 
+    @check_connection
     def add_torrent(self, url):
         """ Adds torrent to queue """
 
+        if not self.is_active:
+            return
+
         return self.client.add_torrent(url)
+
+    def _ping(self):
+        """ Using the get session stats as a way to ping client """
+
+        return self.client.session_stats()
