@@ -11,7 +11,10 @@
 
 from datetime import datetime
 
-from mamba.enterprise import Int, DateTime, Storm, NativeEnum, Unicode
+from mamba.enterprise import (
+    Int, DateTime, Storm, NativeEnum, Unicode, Reference
+)
+
 from mamba.application import model
 
 
@@ -70,26 +73,41 @@ class TorrentQueue(model.Model, Storm):
         self = result
 
     @classmethod
-    def load(cls, **kwargs):
-        store = cls.database.store()
-        result = store.find(cls, **kwargs)
-        return [queue for queue in result]
-
-    @classmethod
-    def load_pending_queue(cls):
-        store = cls.database.store()
-        result = store.find(
-            cls,
-            cls.download_when <= datetime.now(),
-            cls.status == 'PENDING'
-        )
-        return [queue for queue in result]
-
-    @classmethod
     def update_status(cls, new_status, **kwargs):
+        """Updates the status of a given torrent"""
+
         store = cls.database.store()
 
         result = store.find(cls, **kwargs)
         for r in result:
             r.status = new_status
         store.commit()
+
+    @classmethod
+    def load(cls, **kwargs):
+        """Loads instance of torrent queue from db"""
+
+        limit = kwargs.pop('limit', None)
+
+        store = cls.database.store()
+        result = store.find(cls, **kwargs)
+
+        if limit is not None:
+            result.config(limit=limit)
+
+        return [queue for queue in result]
+
+    @classmethod
+    def load_pending_queue(cls, **kwargs):
+        """Loads all the pending torrent requests"""
+
+        limit = kwargs.pop('limit', 5)
+        store = cls.database.store()
+        result = store.find(
+            cls,
+            cls.download_when <= datetime.now(),
+            cls.status == 'PENDING',
+            **kwargs
+        )
+        result.config(limit=limit)
+        return [queue for queue in result]

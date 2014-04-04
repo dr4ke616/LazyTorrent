@@ -5,7 +5,7 @@
     "port": 7298,
     "log_file": "service.log",
     "debug": false,
-    "development": true,
+    "development": false,
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
     "monitor_torrent": 15,
     "torrent_progress": 10,

@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `torrent_queue` (
   `date_added` datetime NOT NULL,
   `torrent_hash` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`torrent_queue_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ;
 
 --
 -- Table structure for table `tv_shows`
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `tv_shows` (
   `rating` int(11) DEFAULT NULL,
   PRIMARY KEY (`tv_show_id`),
   FOREIGN KEY (`torrent_queue_id`) REFERENCES torrent_queue(`torrent_queue_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ;
 
 
 --
@@ -50,6 +50,6 @@ CREATE TABLE IF NOT EXISTS `movies` (
   `rating` int(11) DEFAULT NULL,
   PRIMARY KEY (`movie_id`),
   FOREIGN KEY (`torrent_queue_id`) REFERENCES torrent_queue(`torrent_queue_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ;
 
 SET foreign_key_checks = 1;

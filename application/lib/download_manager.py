@@ -6,13 +6,17 @@
 .. moduleauthor:: Adam Drakeford <adamdrakeford@gmail.com>
 """
 
+import os
 import traceback
 import transmissionrpc
 
 from twisted.python import log
 from mamba.utils import config
+from twisted.internet import defer
 
 from downloader import Downloader
+from application.model.movie import Movie
+from application.model.tv_show import TVShow
 from application.model.torrent_queue import TorrentQueue
 
 
@@ -76,7 +80,8 @@ class DownloadManager(object):
             self._handle_manual_download(torrent, queue_id)
             return
 
-        torrents = self.transmission.add_torrent(link)
+        directory = self._create_directory(queue_id)
+        torrents = self.transmission.add_torrent(link, directory)
 
         torrent_queue = TorrentQueue(torrent_queue_id=queue_id)
         torrent_queue.update_value(
@@ -110,16 +115,16 @@ class DownloadManager(object):
             errback=self.__error_finding_torrents
         )
 
+    @defer.inlineCallbacks
     def monitor_torrent_progress(self):
         """ Monitor download of torrent progess. Used with torrent client
         """
 
         log.msg('Monitoring currently downloading torrents')
 
-        torrent_queue = TorrentQueue.find(
+        torrent_queue = yield TorrentQueue.find(
             (TorrentQueue.status == u'FOUND') |
-            (TorrentQueue.status == u'DOWNLOADING'),
-            async=False
+            (TorrentQueue.status == u'DOWNLOADING')
         )
 
         for tq in torrent_queue:
@@ -142,9 +147,11 @@ class DownloadManager(object):
 
                     continue
 
-            except ValueError:
-                # The torrent hasnt started downloading on client just yet.
-                # We'll check again later
+            except KeyError:
+                log.msg(
+                    'The torrent hasnt started downloading on client just '
+                    'yet. Well check again later. {}'.format(tq.torrent_hash)
+                )
                 continue
             except Exception as error:
                 log.err(
@@ -155,11 +162,17 @@ class DownloadManager(object):
                     traceback.format_exc().splitlines()]
                 return
 
+            if self.app.debug:
+                log.msg(
+                    'ID: {} >>>>> Torrent Status: {}. Database status {} <<<<<'
+                    .format(tq.torrent_queue_id, torrent.status, tq.status)
+                )
+
             if torrent.status == 'downloading' and tq.status == 'FOUND':
 
                 log.msg(
-                    'Updating torrent status to DOWNLOADING: {}'
-                    .format(tq.torrent_hash)
+                    'Updating torrent ID {} status to DOWNLOADING: {}'
+                    .format(tq.torrent_queue_id, tq.torrent_hash)
                 )
 
                 tq.status = u'DOWNLOADING'
@@ -169,14 +182,16 @@ class DownloadManager(object):
                     and tq.status == 'DOWNLOADING':
 
                 log.msg(
-                    'Removing torrent. Updating torrent status to FINISHED: {}'
-                    .format(tq.torrent_hash)
+                    'Removing torrent {}. Updating status to FINISHED: {}'
+                    .format(tq.torrent_queue_id, tq.torrent_hash)
                 )
 
                 self.transmission.remove_torrent_from_client(tq.torrent_hash)
 
                 tq.status = u'FINISHED'
                 tq.update()
+
+        TorrentQueue.database.store().commit()
 
     def __file_created(self, filename, file_id):
         log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
@@ -195,6 +210,33 @@ class DownloadManager(object):
         TorrentQueue.update_status(
             new_status=u'FOUND', torrent_queue_id=file_id
         )
+
+    def _create_directory(self, torrent_queue_id):
+        """ Create a directory for content of files downloaded """
+
+        movie = Movie.find(
+            Movie.torrent_queue_id == torrent_queue_id, async=False
+        ).one()
+        if movie is not None:
+            return self.__mkdir(movie.name)
+
+        tv_show = TVShow.find(
+            TVShow.torrent_queue_id == torrent_queue_id, async=False
+        ).one()
+        if tv_show is not None:
+            return self.__mkdir(tv_show.name)
+
+        return None
+
+    def __mkdir(self, name):
+        """ Creates the directory if not exists """
+
+        directory = os.path.join(self.app.torrent_destination, name)
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        return directory
 
 
 class TransmissionWrapper(object):
@@ -260,13 +302,13 @@ class TransmissionWrapper(object):
         return None
 
     @check_connection
-    def add_torrent(self, url):
+    def add_torrent(self, url, directory=None):
         """ Adds torrent to queue """
 
         if not self.is_active:
             return
 
-        return self.client.add_torrent(url)
+        return self.client.add_torrent(url, download_dir=directory)
 
     def _ping(self):
         """ Using the get session stats as a way to ping client """
