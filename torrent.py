@@ -17,8 +17,8 @@ from mamba import Mamba
 from mamba.web import Page
 
 from application.lib.monitor import TorrentMonitor
-from application.scripts import transmission_controller
-from application.lib.tor_client.tor_controller import TorController
+from application.lib.ext_services.tor_controller import TorController
+from application.lib.ext_services.transmission_controller import TransmissionController
 
 
 def MambaApplicationFactory(settings):
@@ -29,12 +29,9 @@ def MambaApplicationFactory(settings):
     # register settings through Mamba Borg
     app = Mamba(settings)
 
+    # Startup external (optional) dependancies
+    TransmissionController().spawn()
     TorController().spawn()
-
-    if app.transmission_client['use_daemon']:
-        # Start up an instance of Transmission
-        transmission_controller.kill_daemons()
-        transmission_controller.handle_start()
 
     # create the root page
     root = Page(app)

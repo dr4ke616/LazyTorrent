@@ -7,7 +7,7 @@
     "tor_control_port": 9999,
     "log_file": "service.log",
     "debug": false,
-    "development": true,
+    "development": false,
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
     "monitor_torrent": 15,
     "torrent_progress": 10,
@@ -17,7 +17,7 @@
         {
             "host": "bayproxy.in",
             "torrent_host": "torrents.thepiratebay.se",
-            "use_tor_network": false
+            "use_tor_network": true
         },
         {
             "host": "uberproxy.net",
@@ -35,6 +35,6 @@
         "port": 9091,
         "username": "",
         "password": "",
-        "use_daemon": false
+        "use_daemon": true
     }
 }
