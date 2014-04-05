@@ -3,9 +3,11 @@
     "description": "Auto Torrent Downloader",
     "version": "1.0",
     "port": 7298,
+    "tor_socks_port": 9050,
+    "tor_control_port": 9999,
     "log_file": "service.log",
     "debug": false,
-    "development": false,
+    "development": true,
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
     "monitor_torrent": 15,
     "torrent_progress": 10,
@@ -33,6 +35,6 @@
         "port": 9091,
         "username": "",
         "password": "",
-        "use_daemon": true
+        "use_daemon": false
     }
 }

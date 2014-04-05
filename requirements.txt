@@ -16,3 +16,5 @@ zope.event==4.0.2
 zope.interface==4.1.0
 -e git://github.com/PyMamba/mamba-framework.git#egg=mamba-framework
 -e git://github.com/PyMamba/mamba-storm.git#egg=storm
+txtorcon
+Nevow

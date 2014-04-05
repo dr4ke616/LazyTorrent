@@ -18,6 +18,7 @@ from mamba.web import Page
 
 from application.lib.monitor import TorrentMonitor
 from application.scripts import transmission_controller
+from application.lib.tor_client.tor_controller import TorController
 
 
 def MambaApplicationFactory(settings):
@@ -27,6 +28,8 @@ def MambaApplicationFactory(settings):
 
     # register settings through Mamba Borg
     app = Mamba(settings)
+
+    TorController().spawn()
 
     if app.transmission_client['use_daemon']:
         # Start up an instance of Transmission

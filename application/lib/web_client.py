@@ -20,6 +20,7 @@ from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.web.http_headers import Headers
 from twisted.internet import defer, reactor
 from twisted.python import log
+from mamba.utils import config
 
 
 class _WebClient(object):
@@ -27,7 +28,8 @@ class _WebClient(object):
         self._host = str(host)
 
         if use_tor:
-            proxy = TCP4ClientEndpoint(reactor, "localhost", 9150)
+            port = config.Application().tor_socks_port
+            proxy = TCP4ClientEndpoint(reactor, "localhost", int(port))
             proxied_endpoint = SOCKS5ClientEndpoint(self._host, 80, proxy)
             self._agent = ProxyAgent(proxied_endpoint)
         else:
