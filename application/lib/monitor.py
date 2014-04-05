@@ -12,6 +12,7 @@ from twisted.python import log
 from twisted.internet import task
 from mamba.utils import borg, config
 from zope.component import getUtility
+from storm.zope.interfaces import IZStorm
 
 from the_pirate_bay.constants import *
 from the_pirate_bay.tpb import ThePirateBay
@@ -152,8 +153,7 @@ class TorrentMonitor(borg.Borg):
 
         zstorm = getUtility(IZStorm)
         for name, store in zstorm.iterstores():
-            if error is not None:
-                log.msg('Reconnecting store {}...'.format(name))
+            log.msg('Reconnecting store {}...'.format(name))
             store.rollback()
 
         if not self.torrent_loop.running:
