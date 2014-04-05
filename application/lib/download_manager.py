@@ -12,7 +12,6 @@ import transmissionrpc
 
 from twisted.python import log
 from mamba.utils import config
-from twisted.internet import defer
 
 from downloader import Downloader
 from application.model.movie import Movie
@@ -93,8 +92,6 @@ class DownloadManager(object):
             dir specified in config
         """
 
-        torrent.print_torrent()
-
         downloader = Downloader(self.torrent_host, self.use_tor)
 
         chunks = torrent.torrent_link_chunks
@@ -115,16 +112,16 @@ class DownloadManager(object):
             errback=self.__error_finding_torrents
         )
 
-    @defer.inlineCallbacks
     def monitor_torrent_progress(self):
         """ Monitor download of torrent progess. Used with torrent client
         """
 
         log.msg('Monitoring currently downloading torrents')
 
-        torrent_queue = yield TorrentQueue.find(
+        torrent_queue = TorrentQueue.find(
             (TorrentQueue.status == u'FOUND') |
-            (TorrentQueue.status == u'DOWNLOADING')
+            (TorrentQueue.status == u'DOWNLOADING'),
+            async=False
         )
 
         for tq in torrent_queue:
@@ -190,8 +187,6 @@ class DownloadManager(object):
 
                 tq.status = u'FINISHED'
                 tq.update()
-
-        TorrentQueue.database.store().commit()
 
     def __file_created(self, filename, file_id):
         log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
