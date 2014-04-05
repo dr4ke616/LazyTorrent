@@ -17,6 +17,7 @@ from mamba import Mamba
 from mamba.web import Page
 
 from application.lib.monitor import TorrentMonitor
+from application.scripts import transmission_controller
 
 
 def MambaApplicationFactory(settings):
@@ -26,6 +27,11 @@ def MambaApplicationFactory(settings):
 
     # register settings through Mamba Borg
     app = Mamba(settings)
+
+    if app.transmission_client['use_daemon']:
+        # Start up an instance of Transmission
+        transmission_controller.kill_daemons()
+        transmission_controller.handle_start()
 
     # create the root page
     root = Page(app)

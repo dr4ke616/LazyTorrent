@@ -32,6 +32,7 @@
         "host": "localhost",
         "port": 9091,
         "username": "",
-        "password": ""
+        "password": "",
+        "use_daemon": true
     }
 }
