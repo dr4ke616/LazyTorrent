@@ -83,7 +83,7 @@ def kill_daemons():
         except:
             pass
 
-        time.sleep(0.1)
+        time.sleep(0.5)
 
     if run_whoami() == 'root':
         try:
