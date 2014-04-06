@@ -18,8 +18,8 @@ from twisted.internet import reactor, protocol
 
 class TransmissionNotFound(RuntimeError):
     """
-    Raised by launch_tor() in case the tor binary was unspecified and could
-    not be found by consulting the shell.
+    Raised in case the transmissoin binary was unspecified and could
+    not be found.
     """
 
 
