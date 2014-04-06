@@ -248,7 +248,8 @@ class TransmissionWrapper(object):
                 port=app.transmission_client['port']
             )
             self.is_active = True
-        except transmissionrpc.TransmissionError:
+        except transmissionrpc.TransmissionError as e:
+            log.msg('Error: {}'.format(e))
             self.is_active = False
 
     @check_connection

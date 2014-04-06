@@ -7,117 +7,122 @@
 .. moduleauthor:: Adam Drakeford <adamdrakeford@gmail.com>
 """
 
-import sys
-import time
+import os
+import glob
 import signal
-import subprocess
 
 from mamba.utils import config
 from twisted.python import log, filepath
+from twisted.internet import reactor, protocol
+
+
+class TransmissionNotFound(RuntimeError):
+    """
+    Raised by launch_tor() in case the tor binary was unspecified and could
+    not be found by consulting the shell.
+    """
+
+
+class TransmissionProtocol(protocol.ProcessProtocol):
+    """ ProcessProtocol subclass for starting up and
+        shutting down instances of transmissoin
+    """
+
+    def __init__(self):
+        self.data = ''
+
+    def connectionMade(self):
+        """ The output recieved callback """
+
+        log.msg('Connection made to transmissoin process')
+
+    def outReceived(self, data):
+        """ The output recieved callback """
+
+        log.msg('Transmissoin Process recieved {} bytes'.format(len(data)))
+        self.data = self.data + data
+
+    def errReceived(self, data):
+        """ The error recieved callback """
+
+        raise RuntimeError('Transmissoin error, data {}'.format(data))
+
+    def processEnded(self, status):
+        """ The process ended callback """
+
+        if status.value.exitCode != 0:
+            raise RuntimeError(
+                'Transmissoin Process quit unexpectedly, status {}'
+                .format(status.value.exitCode)
+            )
+
+        log.msg(
+            'Transmissoin daemon started, status {}'
+            .format(status.value.exitCode)
+        )
 
 
 class TransmissionController(object):
-    """Controller class for starting up and shutting down instances of tor
-    """
+    """docstring for TransmissionController"""
 
     def __init__(self):
         super(TransmissionController, self).__init__()
 
     def spawn(self):
+        """ Spawns a new instance of Transmissoin """
+
         use_daemon = config.Application().transmission_client['use_daemon']
-        self.kill_daemons()
+        if not use_daemon:
+            log.msg('Not using Transmission daemon.')
+            return
 
-        if use_daemon:
-            self.start()
+        binary = self.find_binary()
+        tp = TransmissionProtocol()
 
-    def start(self):
-        """ Starts the transmission daemon """
-
-        if filepath.exists('transmission.pid'):
-            log.err(
-                'error: transmission.pid found, seems like the application is '
-                'running already. If the application is not running, please '
-                'delete transmission.pid and try again'
+        reactor.addSystemEventTrigger('before', 'shutdown', self.on_exit)
+        try:
+            transport = reactor.spawnProcess(
+                tp, binary, args=['transmission-daemon'],
+                env={'HOME': os.environ['HOME']}
             )
-            sys.exit(-1)
+            transport.closeStdin()
+        except RuntimeError, e:
+            raise e
 
-        p = subprocess.Popen(['transmission-daemon'])
-        output, error = p.communicate()
-        log.err('Starting transmission daemon')
+    def find_binary(self, globs=(
+                    '/usr/sbin/', '/usr/bin/',
+                    '/Applications/Transmissoin_*.app/Contents/MacOS/')):
 
-        if error is not None and error is not '':
-            raise RuntimeError(error)
+        for pattern in globs:
+            for path in glob.glob(pattern):
+                transmissionbin = os.path.join(path, 'transmission-daemon')
+                if self._is_executable(transmissionbin):
+                    return transmissionbin
 
-        log.err('Transmission daemon started...')
-        time.sleep(0.5)
+        raise TransmissionNotFound('No Transmissoin binary found')
 
-    def handle_stop(self):
-        """ Kills the transmission daemon """
+    def on_exit(self):
+        """ Just before application shuts down kill Transmissoin """
 
         transmission_pid = filepath.FilePath('transmission.pid')
         if not transmission_pid.exists():
             log.err('error: transmission.pid file can\'t be found.')
-            sys.exit(-1)
+            raise
 
         pid = transmission_pid.open().read()
-        log.err('Killing process id {} with SIGINT signal'.format(pid))
+        log.msg(
+            'Killing Transmission daemon: process id {} with SIGINT signal'
+            .format(pid)
+        )
+
         try:
             filepath.os.kill(int(pid), signal.SIGINT)
         except:
             raise
 
-        log.err('Killed Transmission daemon {}...'.format(pid))
-        time.sleep(0.5)
+        log.msg('Killed Transmission daemon {}...'.format(pid))
 
-    def kill_daemons(self):
-        """ Kills any transmission daemons that might be still running
-            Run as sudo in order to kill system daemon
-        """
+    def _is_executable(self, path):
+        """Checks if the given path points to an existing, executable file"""
 
-        def run_psx():
-            p = subprocess.Popen(
-                "ps aux | grep [t]ransmission-daemon "
-                "| grep -v grep | awk '{print $2}'",
-                shell=True, stdout=subprocess.PIPE
-            )
-            stdout_list, _ = p.communicate()
-            stdout_list = stdout_list.split('\n')
-            stdout_list.remove('')
-            return stdout_list
-
-        def run_whoami():
-            p = subprocess.Popen("whoami", shell=True, stdout=subprocess.PIPE)
-            whoami, _ = p.communicate()
-            whoami = whoami.strip('\n')
-            return whoami
-
-        for pid in run_psx():
-            try:
-                filepath.os.kill(int(pid), signal.SIGINT)
-            except:
-                pass
-
-            time.sleep(0.5)
-
-        if run_whoami() == 'root':
-            try:
-                p = subprocess.Popen(
-                    "sudo service transmission-daemon status",
-                    shell=True, stdout=subprocess.PIPE,
-                )
-                response, error = p.communicate()
-                if 'transmission-daemon start/running' in response:
-                    p = subprocess.Popen(
-                        "sudo service transmission-daemon stop",
-                        shell=True, stdout=subprocess.PIPE,
-                    )
-                    output, error = p.communicate()
-
-                    if error is not None and error is not '':
-                        raise RuntimeError(error)
-            except:
-                log.err('Sudo access needed')
-                raise
-
-        log.err('All old transmission daemons killed')
-        time.sleep(0.5)
+        return os.path.isfile(path) and os.access(path, os.X_OK)

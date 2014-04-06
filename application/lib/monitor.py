@@ -28,6 +28,9 @@ class TorrentMonitor(borg.Borg):
 
     def __init__(self):
         super(TorrentMonitor, self).__init__()
+
+        log.msg('Starting up monitor')
+
         if not hasattr(self, 'initialized'):
             self.initialized = False
 
