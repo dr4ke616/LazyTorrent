@@ -56,8 +56,8 @@ class TVShow(model.Model, Storm):
 
         if download_when is None:
             if self.air_date is not None:
-                one_day = datetime.timedelta(days=1)
-                download_when = self.air_date + one_day
+                delta = datetime.timedelta(hours=40)
+                download_when = self.air_date + delta
             else:
                 download_when = datetime.datetime.now()
 

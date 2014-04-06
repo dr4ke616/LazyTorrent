@@ -11,13 +11,13 @@
     "torrent_destination": "/home/adam/Downloads/auto_torrent/",
     "monitor_torrent": 15,
     "torrent_progress": 10,
-    "retry_download": 1800,
+    "retry_download": 900,
     "max_retries": 3,
     "pirate_bay_hosts": [
         {
             "host": "bayproxy.in",
             "torrent_host": "torrents.thepiratebay.se",
-            "use_tor_network": true
+            "use_tor_network": false
         },
         {
             "host": "uberproxy.net",

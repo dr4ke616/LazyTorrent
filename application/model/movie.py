@@ -54,8 +54,8 @@ class Movie(model.Model, Storm):
 
         if download_when is None:
             if self.dvd_release is not None:
-                one_day = datetime.timedelta(days=1)
-                download_when = self.dvd_release + one_day
+                delta = datetime.timedelta(hours=40)
+                download_when = self.dvd_release + delta
             else:
                 download_when = datetime.datetime.now()
 
