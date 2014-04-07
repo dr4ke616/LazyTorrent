@@ -1,0 +1,3 @@
+# Base requirements for Mamba
+-e git://github.com/PyMamba/mamba-framework.git#egg=mamba-framework
+-e git://github.com/PyMamba/mamba-storm.git#egg=storm
