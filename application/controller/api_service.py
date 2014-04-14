@@ -16,13 +16,13 @@ import traceback
 from dateutil import parser
 
 from twisted.python import log
-from mamba.web.response import Ok, InternalServerError
+from twisted.internet import defer
 from mamba.application import route
 from mamba.application import controller
+from mamba.web.response import Ok, InternalServerError
 
-from application.model.tv_show import TVShow
 from application.model.movie import Movie
-from application.model.torrent_queue import TorrentQueue
+from application.model.tv_show import TVShow
 
 
 class ApiService(controller.Controller):
@@ -215,28 +215,74 @@ class ApiService(controller.Controller):
             return msg
 
     @route('/get/queue', method=['POST', 'GET'])
+    @defer.inlineCallbacks
     def get_torrent_queue(self, request, **kwargs):
         """Loads and returns the existing torrent queue
         """
 
-        results = TorrentQueue.load()
-        data = []
-        for result in results:
+        movies = yield self.get_movies(**kwargs)
+        tv_shows = yield self.get_tvshows(**kwargs)
+
+        data = {
+            'TV_SHOW': tv_shows,
+            'MOVIE': movies
+        }
+
+        defer.returnValue(
+            Ok(self._generate_response(code=0, message='Queue', data=data))
+        )
+
+    @defer.inlineCallbacks
+    def get_movies(self, **kwargs):
+        """ Loads all entries for movies
+            :param kwargs: Pass in argument for querying
+            :return: defered return
+        """
+
+        movies = yield Movie.find(**kwargs)
+
+        data = list()
+        for movie in movies:
             data.append({
-                'torrent_queue_id': result.torrent_queue_id,
-                'media_type': result.media_type,
-                'query': result.query,
-                'download_when': unicode(result.download_now),
-                'status': result.status,
-                'date_added': unicode(result.date_added)
+                'name': movie.name,
+                'status': movie.torrent_queue.status,
+                'movie_id': movie.movie_id,
+                'date_added': unicode(movie.torrent_queue.date_added),
+                'download_when': unicode(movie.torrent_queue.download_when),
+                'torrent_queue_id': movie.torrent_queue.torrent_queue_id
             })
 
-        return Ok(self._generate_response(
-            code=0,
-            message='Queue',
-            data=data))
+        defer.returnValue(data)
+
+    @defer.inlineCallbacks
+    def get_tvshows(self, **kwargs):
+        """ Loads all entries for tv shows
+            :param kwargs: Pass in argument for querying
+            :return: defered return
+        """
+
+        tv_shows = yield TVShow.find(**kwargs)
+
+        data = list()
+        for tv_show in tv_shows:
+            data.append({
+                'name': tv_show.name,
+                'status': tv_show.torrent_queue.status,
+                'tv_show_id': tv_show.tv_show_id,
+                'date_added': unicode(tv_show.torrent_queue.date_added),
+                'episode_name': tv_show.episode_name,
+                'season_number': tv_show.season_number,
+                'download_when': unicode(tv_show.torrent_queue.download_when),
+                'episode_number': tv_show.episode_number,
+                'torrent_queue_id': tv_show.torrent_queue.torrent_queue_id
+            })
+
+        defer.returnValue(data)
 
     def _generate_response(self, code, message, data=None):
+        """ Generates the response to be sent back to client
+        """
+
         resp = {
             'code': code,
             'message': message,
@@ -245,6 +291,9 @@ class ApiService(controller.Controller):
         return json.dumps(resp)
 
     def _check_args(self, local, req_args):
+        """ Function to check correct arguments are recieved from client
+        """
+
         for k, v in local.iteritems():
             if k in req_args and v is None:
                 return self._generate_response(
