@@ -141,6 +141,7 @@ class TorrentMonitor(borg.Borg):
             TorrentQueue.update_status(
                 new_status='NOT_FOUND', torrent_queue_id=db_id
             )
+            self.error_finding_torrents()
 
     def error_finding_torrents(self):
         log.msg('Going to try again')
@@ -174,4 +175,4 @@ class TorrentMonitor(borg.Borg):
             d = self.retry_download_loop.start(self.app.retry_download)
             d.addErrback(self._reconnect_stores)
 
-        self._initialize_hosts()
+        self.error_finding_torrents()
