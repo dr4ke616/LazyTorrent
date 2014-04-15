@@ -220,8 +220,8 @@ class ApiService(controller.Controller):
         """Loads and returns the existing torrent queue
         """
 
-        movies = yield self.get_movies(**kwargs)
-        tv_shows = yield self.get_tvshows(**kwargs)
+        movies = yield self.get_movies()
+        tv_shows = yield self.get_tvshows()
 
         data = {
             'TV_SHOW': tv_shows,
@@ -229,7 +229,42 @@ class ApiService(controller.Controller):
         }
 
         defer.returnValue(
-            Ok(self._generate_response(code=0, message='Queue', data=data))
+            Ok(self._generate_response(
+                code=0, message='Full Queue', data=data))
+        )
+
+    @route('/get/queue/movie', method=['POST', 'GET'])
+    @defer.inlineCallbacks
+    def get_torrent_queue_movies(self, request, **kwargs):
+        """Loads and returns the existing torrent queue
+        """
+
+        movies = yield self.get_movies()
+
+        data = {
+            'MOVIE': movies
+        }
+
+        defer.returnValue(
+            Ok(self._generate_response(
+                code=0, message='Movies Queue', data=data))
+        )
+
+    @route('/get/queue/tv_show', method=['POST', 'GET'])
+    @defer.inlineCallbacks
+    def get_torrent_queue_tv_show(self, request, **kwargs):
+        """Loads and returns the existing torrent queue
+        """
+
+        tv_shows = yield self.get_tvshows()
+
+        data = {
+            'TV_SHOW': tv_shows
+        }
+
+        defer.returnValue(
+            Ok(self._generate_response(
+                code=0, message='TV Show Queue', data=data))
         )
 
     @defer.inlineCallbacks
