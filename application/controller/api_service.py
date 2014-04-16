@@ -15,6 +15,7 @@ import urllib
 import traceback
 from dateutil import parser
 
+from storm.expr import Desc
 from twisted.python import log
 from twisted.internet import defer
 from mamba.application import route
@@ -275,6 +276,7 @@ class ApiService(controller.Controller):
         """
 
         movies = yield Movie.find(**kwargs)
+        movies.order_by(Desc(Movie.movie_id))
 
         data = list()
         for movie in movies:
@@ -297,6 +299,7 @@ class ApiService(controller.Controller):
         """
 
         tv_shows = yield TVShow.find(**kwargs)
+        tv_shows.order_by(Desc(TVShow.tv_show_id))
 
         data = list()
         for tv_show in tv_shows:

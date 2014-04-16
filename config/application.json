@@ -15,7 +15,7 @@
     "max_retries": 3,
     "pirate_bay_hosts": [
         {
-            "host": "uberproxy.net",
+            "host": "suprbay.net",
             "torrent_host": "torrents.thepiratebay.se",
             "use_tor_network": false
         },
