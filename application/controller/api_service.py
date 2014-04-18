@@ -358,7 +358,7 @@ class ApiService(controller.Controller):
             )
 
         for k, v in local.iteritems():
-            if k not in req_args or v is None:
+            if k in req_args and v is None:
                 return self._generate_response(
                     code=405,
                     message='{} argument required'.format(k)
