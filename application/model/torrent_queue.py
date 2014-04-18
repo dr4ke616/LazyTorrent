@@ -12,7 +12,7 @@
 from datetime import datetime
 
 from mamba.enterprise import (
-    Int, DateTime, Storm, NativeEnum, Unicode, Reference
+    Int, DateTime, Storm, NativeEnum, Unicode, transact
 )
 
 from mamba.application import model
@@ -33,8 +33,8 @@ class TorrentQueue(model.Model, Storm):
     download_when = DateTime(default=datetime.now())
     status = NativeEnum(
         set={
-            'PENDING', 'FOUND', 'NOT_FOUND',
-            'FINISHED', 'DOWNLOADING', 'WATCHED'
+            'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED',
+            'DOWNLOADING', 'WATCHED', 'DELETED'
         }
     )
     date_added = DateTime(default=None)
@@ -73,6 +73,7 @@ class TorrentQueue(model.Model, Storm):
         self = result
 
     @classmethod
+    @transact
     def update_status(cls, new_status, **kwargs):
         """Updates the status of a given torrent"""
 
@@ -98,6 +99,7 @@ class TorrentQueue(model.Model, Storm):
         return [queue for queue in result]
 
     @classmethod
+    @transact
     def load_pending_queue(cls, **kwargs):
         """Loads all the pending torrent requests"""
 

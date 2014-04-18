@@ -103,13 +103,13 @@ class TorrentMonitor(borg.Borg):
         log.msg('Going to reset the statuses of NOT_FOUND items in queue')
 
         TorrentQueue.update_status(
-            new_status='PENDING', status='NOT_FOUND'
+            new_status='PENDING', status='NOT_FOUND', async=False
         )
 
     def search_for_torrents(self):
         log.msg('Searching for my torrents')
 
-        queue = TorrentQueue.load_pending_queue()
+        queue = TorrentQueue.load_pending_queue(async=False)
 
         for torrent in queue:
             req = self.pirate_bay_client.search(
@@ -139,7 +139,7 @@ class TorrentMonitor(borg.Borg):
             log.msg('No Torrents found for torrent_queue_id: {}'.format(db_id))
 
             TorrentQueue.update_status(
-                new_status='NOT_FOUND', torrent_queue_id=db_id
+                new_status='NOT_FOUND', torrent_queue_id=db_id, async=False
             )
             self.error_finding_torrents()
 

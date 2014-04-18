@@ -24,6 +24,7 @@ from mamba.web.response import Ok, InternalServerError
 
 from application.model.movie import Movie
 from application.model.tv_show import TVShow
+from application.model.torrent_queue import TorrentQueue
 
 
 class ApiService(controller.Controller):
@@ -280,14 +281,10 @@ class ApiService(controller.Controller):
 
         data = list()
         for movie in movies:
-            data.append({
-                'name': movie.name,
-                'status': movie.torrent_queue.status,
-                'movie_id': movie.movie_id,
-                'date_added': unicode(movie.torrent_queue.date_added),
-                'download_when': unicode(movie.torrent_queue.download_when),
-                'torrent_queue_id': movie.torrent_queue.torrent_queue_id
-            })
+            if movie.torrent_queue.status == 'DELETED':
+                continue
+
+            data.append(movie.dict(json=True))
 
         defer.returnValue(data)
 
@@ -303,19 +300,41 @@ class ApiService(controller.Controller):
 
         data = list()
         for tv_show in tv_shows:
-            data.append({
-                'name': tv_show.name,
-                'status': tv_show.torrent_queue.status,
-                'tv_show_id': tv_show.tv_show_id,
-                'date_added': unicode(tv_show.torrent_queue.date_added),
-                'episode_name': tv_show.episode_name,
-                'season_number': tv_show.season_number,
-                'download_when': unicode(tv_show.torrent_queue.download_when),
-                'episode_number': tv_show.episode_number,
-                'torrent_queue_id': tv_show.torrent_queue.torrent_queue_id
-            })
+            if tv_show.torrent_queue.status == 'DELETED':
+                continue
+
+            data.append(tv_show.dict(json=True))
 
         defer.returnValue(data)
+
+    @route('/update/queue', method=['POST', 'GET'])
+    @defer.inlineCallbacks
+    def update_status(self, request, **kwargs):
+        check = self._check_args(kwargs, ('torrent_queue_id', 'status', ))
+        if check is not None:
+            defer.returnValue(Ok(check))
+
+        queue_id = kwargs.get('torrent_queue_id')
+        status = kwargs.get('status', '').upper()
+
+        statuses = (
+            'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED',
+            'DOWNLOADING', 'WATCHED', 'DELETED'
+        )
+
+        if status not in statuses:
+            defer.returnValue(
+                Ok(self._generate_response(200, 'Invalid status'))
+            )
+
+        yield TorrentQueue.update_status(
+            new_status=status, torrent_queue_id=int(queue_id)
+        )
+
+        defer.returnValue(Ok(self._generate_response(
+            code=0,
+            message='Updated status for ID {} to {}'.format(queue_id, status)))
+        )
 
     def _generate_response(self, code, message, data=None):
         """ Generates the response to be sent back to client
@@ -331,9 +350,15 @@ class ApiService(controller.Controller):
     def _check_args(self, local, req_args):
         """ Function to check correct arguments are recieved from client
         """
+        if len(local) == 0:
+            msg = ', '.join(req_args)
+            return self._generate_response(
+                code=405,
+                message='{} argument required'.format(msg)
+            )
 
         for k, v in local.iteritems():
-            if k in req_args and v is None:
+            if k not in req_args or v is None:
                 return self._generate_response(
                     code=405,
                     message='{} argument required'.format(k)

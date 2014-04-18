@@ -193,7 +193,7 @@ class DownloadManager(object):
         log.msg('Torrent saved at: {}'.format(filename))
 
         TorrentQueue.update_status(
-            new_status=u'FOUND', torrent_queue_id=file_id
+            new_status=u'FOUND', torrent_queue_id=file_id, async=False
         )
 
     def __error_finding_torrents(self, file_name, file_id):
@@ -203,7 +203,7 @@ class DownloadManager(object):
         )
 
         TorrentQueue.update_status(
-            new_status=u'FOUND', torrent_queue_id=file_id
+            new_status=u'FOUND', torrent_queue_id=file_id, async=False
         )
 
     def _create_directory(self, torrent_queue_id):
