@@ -79,11 +79,11 @@ def patch(url, headers, producer=None, use_tor=False):
     """Make a PATCH request and returns a deferred
     """
 
-    return request('PATCH', url, producer, use_tor)
+    return request('PATCH', url, producer, use_tor=use_tor)
 
 
 def head(url, headers, producer=None, use_tor=False):
     """Make a HEAD request and returns a deferred
     """
 
-    return request('HEAD', url, producer, use_tor)
+    return request('HEAD', url, producer, use_tor=use_tor)
