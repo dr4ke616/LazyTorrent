@@ -1,8 +1,8 @@
 
-from torrent_list import List
+from tpb_parser import ThePirateBayParser
 
 
-class Paginated(List):
+class Paginated(ThePirateBayParser):
     """
     Abstract class on top of ``List`` for parsing a torrent list with
     pagination capabilities.

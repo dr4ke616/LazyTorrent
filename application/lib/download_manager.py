@@ -92,19 +92,18 @@ class DownloadManager(object):
             dir specified in config
         """
 
-        downloader = Downloader(self.torrent_host, self.use_tor)
+        downloader = Downloader(self.use_tor)
 
         chunks = torrent.torrent_link_chunks
-        remote_file = '{}/{}'.format(chunks['id'], chunks['url-title'])
-        location = self.app.torrent_destination + chunks['url-title']
-
-        torrent_queue = tuple()
-        file_to_get = {
-            'remote_file': remote_file,
-            'location': location,
+        url = 'http://{}/{}/{}'.format(
+            self.torrent_host, chunks['id'], chunks['url-title']
+        )
+        download_location = self.app.torrent_destination + chunks['url-title']
+        torrent_queue = ({
+            'url': url,
+            'download_location': download_location,
             'id': queue_id
-        }
-        torrent_queue += (file_to_get, )
+        }, )
 
         downloader.get(
             files_to_download=torrent_queue,

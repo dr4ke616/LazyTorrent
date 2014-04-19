@@ -2,12 +2,13 @@ import re
 from lxml import html
 
 from twisted.python import log
+from twisted.web.client import readBody
 
 from torrent import Torrent
-from ..web_client import WebClient
+from application.lib import webclient
 
 
-class List(object):
+class ThePirateBayParser(object):
     """
     Abstract class for parsing a torrent list at some url and generate torrent
     objects to iterate over. Includes a resource path parser.
@@ -24,34 +25,41 @@ class List(object):
         Creates an instance of PirateBayClient twisted client.
         sends of request and exeutes callback functions on
         response
+
         :param callback: This is a callback function that gets passed
             from the caller. The function passes a list of returned torrent
             objects. The list is empty if no torrents exist
         """
-
-        client = WebClient(self.url.base.host(), self.use_tor)
 
         def _process_error(failure):
             log.err(str(failure))
             log.err(failure.getTraceback())
             errback()
 
-        def _process_torrents(response):
-            if response is None:
+        def _process_torrents(data):
+            if data is None:
                 log.err('No response from Pirate Bay. Trying again')
                 errback()
                 return
 
-            document = html.fromstring(response)
+            document = html.fromstring(data)
             torrents = [
                 self._build_torrent(row)
                 for row in self._get_torrent_rows(document)]
 
             callback(torrents, **kwargs)
 
-        result = client.request_page(self.url.full_path())
-        result.addCallback(_process_torrents)
-        result.addErrback(_process_error)
+        def _process_response(response):
+            log.msg('Response Code: {}'.format(response.code))
+
+            d = readBody(response)
+            d.addCallbacks(_process_torrents)
+            d.addErrback(_process_error)
+            return d
+
+        defer = webclient.get(str(self.url), '', use_tor=self.use_tor)
+        defer.addCallback(_process_response)
+        defer.addErrback(_process_error)
 
     def _get_torrent_rows(self, page):
         """

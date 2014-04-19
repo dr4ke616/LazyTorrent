@@ -35,7 +35,6 @@ class TorrentMonitor(borg.Borg):
             self.initialized = False
 
         self.app = config.Application()
-        self.download_manager = DownloadManager()
 
         self.initialize()
 
@@ -89,6 +88,8 @@ class TorrentMonitor(borg.Borg):
             use_tor = host_config['use_tor_network']
 
             self.pirate_bay_client = ThePirateBay(web_host, use_tor)
+
+            self.download_manager = DownloadManager()
             self.download_manager.initialize(torrent_host, use_tor, self.app)
 
             log.msg('Switching to different host')
