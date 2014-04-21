@@ -20,6 +20,11 @@
             "use_tor_network": false
         },
         {
+            "host": "pirateproxy.net",
+            "torrent_host": "torrents.thepiratebay.se",
+            "use_tor_network": false
+        },
+        {
             "host": "bayproxy.in",
             "torrent_host": "torrents.thepiratebay.se",
             "use_tor_network": false

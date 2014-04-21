@@ -116,33 +116,21 @@ class DownloadManager(object):
         """
 
         log.msg('Monitoring currently downloading torrents')
-
-        torrent_queue = TorrentQueue.find(
-            (TorrentQueue.status == u'FOUND') |
-            (TorrentQueue.status == u'DOWNLOADING'),
-            async=False
-        )
+        torrent_queue = self._load_downloading_torrent_queue()
 
         for tq in torrent_queue:
-
             if tq.torrent_hash is None:
                 continue
 
             try:
                 torrent = self.transmission.get_torrent(tq.torrent_hash)
-
                 if torrent is None:
                     if self.transmission.is_active is False:
                         # Connection to Transmission has gone away.
                         # Setting state of torrent queue so that the torrent
                         # file can be downloaded manually
-
-                        tq.torrent_hash = None
-                        tq.status = u'PENDING'
-                        tq.update()
-
+                        self._reset_torrent(tq)
                     continue
-
             except KeyError:
                 log.msg(
                     'The torrent hasnt started downloading on client just '
@@ -156,54 +144,78 @@ class DownloadManager(object):
                 )
                 [log.err(line) for line in
                     traceback.format_exc().splitlines()]
-                return
+                raise
 
-            if self.app.debug:
-                log.msg(
-                    'ID: {} >>>>> Torrent Status: {}. Database status {} <<<<<'
-                    .format(tq.torrent_queue_id, torrent.status, tq.status)
-                )
+            self.__debug_logging(
+                'ID: {} >>>>> Torrent Status: {}. Database status {} <<<<<'
+                .format(tq.torrent_queue_id, torrent.status, tq.status)
+            )
+            self._update_torrent(torrent, tq)
 
-            if torrent.status == 'downloading' and tq.status == 'FOUND':
+    def _load_downloading_torrent_queue(self):
+        """ Load torrents ready for downloading """
 
-                log.msg(
-                    'Updating torrent ID {} status to DOWNLOADING: {}'
-                    .format(tq.torrent_queue_id, tq.torrent_hash)
-                )
-
-                tq.status = u'DOWNLOADING'
-                tq.update()
-
-            elif torrent.status in ('seeding', 'stopped') \
-                    and tq.status == 'DOWNLOADING':
-
-                log.msg(
-                    'Removing torrent {}. Updating status to FINISHED: {}'
-                    .format(tq.torrent_queue_id, tq.torrent_hash)
-                )
-
-                self.transmission.remove_torrent_from_client(tq.torrent_hash)
-
-                tq.status = u'FINISHED'
-                tq.update()
-
-    def __file_created(self, filename, file_id):
-        log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
-        log.msg('Torrent saved at: {}'.format(filename))
-
-        TorrentQueue.update_status(
-            new_status=u'FOUND', torrent_queue_id=file_id, async=False
+        return TorrentQueue.find(
+            (TorrentQueue.status == u'FOUND') |
+            (TorrentQueue.status == u'DELETED') |
+            (TorrentQueue.status == u'DOWNLOADING'),
+            async=False
         )
 
-    def __error_finding_torrents(self, file_name, file_id):
+    def _reset_torrent(self, tq_obj):
+        """ Resets the torrent status in database """
+
+        tq_obj.torrent_hash = None
+        tq_obj.status = u'PENDING'
+        tq_obj.update()
+
+    def _update_torrent(self, trasn_torrent, tq_obj):
+        """ Updates the torrent status in the database
+            based on download status
+        """
+
+        if trasn_torrent.status == 'downloading' and tq_obj.status == 'FOUND':
+            self._handel_downloading_transmission(tq_obj)
+        elif trasn_torrent.status in ('seeding', 'stopped') \
+                and tq_obj.status == 'DOWNLOADING':
+            self._handel_finished_transmission(tq_obj)
+        elif trasn_torrent.status == 'downloading' \
+                and tq_obj.status == 'DELETED':
+            self._handel_delete_transmissoin(tq_obj)
+
+    def _handel_downloading_transmission(self, tq_obj):
+        """ Update status of torrent to downloading """
+
         log.msg(
-            'Problem with downloading torrent {}, going to set '
-            'to NOT_FOUND and try again later'.format(file_name)
+            'Updating torrent ID {} status to DOWNLOADING: {}'
+            .format(tq_obj.torrent_queue_id, tq_obj.torrent_hash)
         )
+        tq_obj.status = u'DOWNLOADING'
+        tq_obj.update()
 
-        TorrentQueue.update_status(
-            new_status=u'FOUND', torrent_queue_id=file_id, async=False
+    def _handel_finished_transmission(self, tq_obj):
+        """ Update status of torrent to finished """
+
+        log.msg(
+            'Removing torrent {}. Updating status to FINISHED: {}'
+            .format(tq_obj.torrent_queue_id, tq_obj.torrent_hash)
         )
+        self.transmission.remove_torrent_from_client(tq_obj.torrent_hash)
+        tq_obj.torrent_hash = None
+        tq_obj.status = u'FINISHED'
+        tq_obj.update()
+
+    def _handel_delete_transmissoin(self, tq_obj):
+        """ Update status of torrent to deleted """
+
+        log.msg(
+            'User delete torrent {}. Updating status to DELETED: {}'
+            .format(tq_obj.torrent_queue_id, tq_obj.torrent_hash)
+        )
+        self.transmission.remove_torrent_from_client(tq_obj.torrent_hash)
+        tq_obj.torrent_hash = None
+        tq_obj.status = u'DELETED'
+        tq_obj.update()
 
     def _create_directory(self, torrent_queue_id):
         """ Create a directory for content of files downloaded """
@@ -222,6 +234,32 @@ class DownloadManager(object):
 
         return None
 
+    def __file_created(self, filename, file_id):
+        """ Callback for when the physical torrent file has been downloaded.
+            Used when Transmission client is not running
+        """
+
+        log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
+        log.msg('Torrent saved at: {}'.format(filename))
+
+        TorrentQueue.update_status(
+            new_status=u'FOUND', torrent_queue_id=file_id, async=False
+        )
+
+    def __error_finding_torrents(self, file_name, file_id):
+        """ Error callback for when the physical torrent file has failed to
+            downlaod. Used when Transmission client is not running
+        """
+
+        log.msg(
+            'Problem with downloading torrent {}, going to set '
+            'to NOT_FOUND and try again later'.format(file_name)
+        )
+
+        TorrentQueue.update_status(
+            new_status=u'FOUND', torrent_queue_id=file_id, async=False
+        )
+
     def __mkdir(self, name):
         """ Creates the directory if not exists """
 
@@ -231,6 +269,12 @@ class DownloadManager(object):
             os.makedirs(directory)
 
         return directory
+
+    def __debug_logging(self, message, force=False):
+        """ Debuging messages printed when true in config file """
+
+        if self.app.debug or force:
+            log.msg(message)
 
 
 class TransmissionWrapper(object):

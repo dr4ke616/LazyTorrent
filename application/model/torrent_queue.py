@@ -56,6 +56,7 @@ class TorrentQueue(model.Model, Storm):
         store.commit()
 
     def update_value(self, **kwargs):
+        """ Updates a given value using the torrent_queue_id """
 
         result = TorrentQueue.find(
             TorrentQueue.torrent_queue_id == self.torrent_queue_id,
