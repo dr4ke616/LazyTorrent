@@ -11,8 +11,8 @@ import txtorcon
 import functools
 
 from twisted.python import log
-from twisted.internet import reactor
 from mamba.utils import config
+from twisted.internet import reactor
 
 
 class TorController(object):

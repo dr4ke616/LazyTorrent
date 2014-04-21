@@ -18,7 +18,9 @@ from mamba.web import Page
 
 from application.lib.monitor import TorrentMonitor
 from application.lib.ext_services.tor_controller import TorController
-from application.lib.ext_services.transmission_controller import TransmissionController
+from application.lib.ext_services.transmission_controller import (
+    TransmissionController
+)
 
 
 def start_monitor():
