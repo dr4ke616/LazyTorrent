@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 # -*- mamba-file-type: mamba-controller -*-
-# Copyright (c) 2014 - adam <adam@localhost>
+# Copyright (c) 2014 - Adam Drakeford <adamdrakeford@gmail.com>
 
 """
 .. controller:: ApiService
@@ -277,7 +277,7 @@ class ApiService(controller.Controller):
         """
 
         movies = yield Movie.find(**kwargs)
-        movies.order_by(Desc(Movie.movie_id))
+        movies.order_by(Desc(Movie.id))
 
         data = list()
         for movie in movies:
@@ -296,7 +296,7 @@ class ApiService(controller.Controller):
         """
 
         tv_shows = yield TVShow.find(**kwargs)
-        tv_shows.order_by(Desc(TVShow.tv_show_id))
+        tv_shows.order_by(Desc(TVShow.id))
 
         data = list()
         for tv_show in tv_shows:
@@ -327,9 +327,7 @@ class ApiService(controller.Controller):
                 Ok(self._generate_response(200, 'Invalid status'))
             )
 
-        yield TorrentQueue.update_status(
-            new_status=status, torrent_queue_id=int(queue_id)
-        )
+        yield TorrentQueue.update_status(new_status=status, id=int(queue_id))
 
         defer.returnValue(Ok(self._generate_response(
             code=0,

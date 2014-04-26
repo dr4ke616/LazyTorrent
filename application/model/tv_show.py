@@ -25,23 +25,20 @@ class TVShow(model.Model, Storm):
 
     __metaclass__ = model.MambaStorm
     __storm_table__ = 'tv_shows'
-    __mamba_schema__ = False
 
     __media_type__ = 'TV_SHOW'
 
-    tv_show_id = Int(primary=True, size=10, auto_increment=True)
-    torrent_queue_id = Int(size=10)
+    id = Int(primary=True, size=11, auto_increment=True)
+    torrent_queue_id = Int(size=11)
     name = Unicode(size=256)
-    season_number = Int(size=11)
-    episode_number = Int(size=11)
-    air_date = DateTime()
-    episode_name = Unicode()
-    rating = Int(size=11)
+    season_number = Int()
+    episode_number = Int()
+    air_date = DateTime(default=None, allow_none=True)
+    episode_name = Unicode(default=None)
+    rating = Int(default=None)
 
     # references
-    torrent_queue = Reference(
-        torrent_queue_id, 'TorrentQueue.torrent_queue_id'
-    )
+    torrent_queue = Reference(torrent_queue_id, 'TorrentQueue.id')
 
     def __init__(self, **kwargs):
         for key, value in kwargs.iteritems():
@@ -94,4 +91,4 @@ class TVShow(model.Model, Storm):
         queue.date_added = datetime.datetime.now()
         queue.create()
 
-        return queue.torrent_queue_id
+        return queue.id

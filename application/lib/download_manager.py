@@ -82,7 +82,7 @@ class DownloadManager(object):
         directory = self._create_directory(queue_id)
         torrents = self.transmission.add_torrent(link, directory)
 
-        torrent_queue = TorrentQueue(torrent_queue_id=queue_id)
+        torrent_queue = TorrentQueue(id=queue_id)
         torrent_queue.update_value(
             status=u'FOUND', torrent_hash=torrents.hashString
         )
@@ -148,7 +148,7 @@ class DownloadManager(object):
 
             self.__debug_logging(
                 'ID: {} >>>>> Torrent Status: {}. Database status {} <<<<<'
-                .format(tq.torrent_queue_id, torrent.status, tq.status)
+                .format(tq.id, torrent.status, tq.status)
             )
             self._update_torrent(torrent, tq)
 
@@ -188,7 +188,7 @@ class DownloadManager(object):
 
         log.msg(
             'Updating torrent ID {} status to DOWNLOADING: {}'
-            .format(tq_obj.torrent_queue_id, tq_obj.torrent_hash)
+            .format(tq_obj.id, tq_obj.torrent_hash)
         )
         tq_obj.status = u'DOWNLOADING'
         tq_obj.update()
@@ -198,7 +198,7 @@ class DownloadManager(object):
 
         log.msg(
             'Removing torrent {}. Updating status to FINISHED: {}'
-            .format(tq_obj.torrent_queue_id, tq_obj.torrent_hash)
+            .format(tq_obj.id, tq_obj.torrent_hash)
         )
         self.transmission.remove_torrent_from_client(tq_obj.torrent_hash)
         tq_obj.torrent_hash = None
@@ -210,7 +210,7 @@ class DownloadManager(object):
 
         log.msg(
             'User delete torrent {}. Updating status to DELETED: {}'
-            .format(tq_obj.torrent_queue_id, tq_obj.torrent_hash)
+            .format(tq_obj.id, tq_obj.torrent_hash)
         )
         self.transmission.remove_torrent_from_client(tq_obj.torrent_hash)
         tq_obj.torrent_hash = None
@@ -239,11 +239,11 @@ class DownloadManager(object):
             Used when Transmission client is not running
         """
 
-        log.msg('Saved file for torrent_queue_id: {}'.format(file_id))
+        log.msg('Saved file for torrent. ID: {}'.format(file_id))
         log.msg('Torrent saved at: {}'.format(filename))
 
         TorrentQueue.update_status(
-            new_status=u'FOUND', torrent_queue_id=file_id, async=False
+            new_status=u'FOUND', id=file_id, async=False
         )
 
     def __error_finding_torrents(self, file_name, file_id):
@@ -257,7 +257,7 @@ class DownloadManager(object):
         )
 
         TorrentQueue.update_status(
-            new_status=u'FOUND', torrent_queue_id=file_id, async=False
+            new_status=u'FOUND', id=file_id, async=False
         )
 
     def __mkdir(self, name):

@@ -14,6 +14,9 @@ import unittest
 
 from datetime import datetime
 
+from mamba.application import model
+from mamba.unittest.database_helpers import prepare_model_for_test, ENGINE
+
 from application.model.movie import Movie
 from application.model.tv_show import TVShow
 from application.model.torrent_queue import TorrentQueue
@@ -21,12 +24,41 @@ from application.model.torrent_queue import TorrentQueue
 
 class ModelsTestCase(unittest.TestCase):
 
+    def _load_create_tables_from_file(slef):
+        path = os.path.dirname(os.path.realpath(__file__))
+        with open(path + '/schema.sql', 'r') as f:
+            content = f.read()
+            f.close()
+
+        store = TorrentQueue.database.store()
+        store.execute(content)
+        store.commit()
+
+    def _prepare_models_for_test(self):
+        for _, mod in globals().items():
+            if type(mod) is model.MambaStorm:
+                prepare_model_for_test(mod, ENGINE.NATIVE)
+
+    def _create_tables(self, load_from_file=False):
+        if not load_from_file:
+            for _, mod in globals().items():
+                if type(mod) is model.MambaStorm:
+                    mod().create_table(async=False)
+        else:
+            self._load_create_tables_from_file()
+
+    def _toggle_foreign_key_check(self, bool):
+        check = "SET FOREIGN_KEY_CHECKS = {};".format(int(bool))
+        store = TorrentQueue.database.store()
+        store.execute(check)
+        store.commit()
+
     def setUp(self):
         ## Tear down databse and create schema
-        store = TorrentQueue.database.store()
-        sql = self._load_sql_schema()
-        store.execute(sql)
-        store.commit()
+        # self._prepare_models_for_test()
+        self._toggle_foreign_key_check(False)
+        self._create_tables(load_from_file=True)
+        self._toggle_foreign_key_check(True)
 
     def test_torrent_queue_no_when(self):
         queue = TorrentQueue()
@@ -62,7 +94,7 @@ class ModelsTestCase(unittest.TestCase):
         queue = TorrentQueue.load()
         self.assertEquals(1, len(queue))
 
-        movie = Movie.load(movie_id=1)
+        movie = Movie.load(id=1)
         self.assertEquals(1, len(movie))
 
     def test_movie_with_when(self):
@@ -73,10 +105,10 @@ class ModelsTestCase(unittest.TestCase):
         movie.rating = 9
         movie.create()
 
-        queue = TorrentQueue.load_pending_queue()
+        queue = TorrentQueue.load_pending_queue(async=False)
         self.assertEquals(1, len(queue))
 
-        movie = Movie.load(movie_id=1)
+        movie = Movie.load(id=1)
         self.assertEquals(1, len(movie))
 
     def test_movie_with_when_before_release_date(self):
@@ -87,10 +119,10 @@ class ModelsTestCase(unittest.TestCase):
         movie.rating = 9
         movie.create()
 
-        queue = TorrentQueue.load_pending_queue()
+        queue = TorrentQueue.load_pending_queue(async=False)
         self.assertEquals(0, len(queue))
 
-        movie = Movie.load(movie_id=1)
+        movie = Movie.load(id=1)
         self.assertEquals(1, len(movie))
 
     def test_tv_show_no_when(self):
@@ -106,7 +138,7 @@ class ModelsTestCase(unittest.TestCase):
         queue = TorrentQueue.load()
         self.assertEquals(1, len(queue))
 
-        tv_show = TVShow.load(tv_show_id=1)
+        tv_show = TVShow.load(id=1)
         self.assertEquals(1, len(tv_show))
 
     def test_tv_show_with_when(self):
@@ -119,10 +151,10 @@ class ModelsTestCase(unittest.TestCase):
         tv_show.rating = 9
         tv_show.create()
 
-        queue = TorrentQueue.load_pending_queue()
+        queue = TorrentQueue.load_pending_queue(async=False)
         self.assertEquals(1, len(queue))
 
-        tv_show = TVShow.load(tv_show_id=1)
+        tv_show = TVShow.load(id=1)
         self.assertEquals(1, len(tv_show))
 
     def test_tv_show_with_when_before_air_date(self):
@@ -135,16 +167,9 @@ class ModelsTestCase(unittest.TestCase):
         tv_show.rating = 9
         tv_show.create()
 
-        queue = TorrentQueue.load_pending_queue()
+        queue = TorrentQueue.load_pending_queue(async=False)
         self.assertEquals(0, len(queue))
 
-        tv_show = TVShow.load(tv_show_id=1)
+        tv_show = TVShow.load(id=1)
         self.assertEquals(1, len(tv_show))
 
-    def _load_sql_schema(slef):
-        path = os.path.dirname(os.path.realpath(__file__))
-        with open(path + '/../model/schema/db_schema.sql', 'r') as f:
-            content = f.read()
-            f.close()
-
-        return content

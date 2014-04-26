@@ -25,21 +25,18 @@ class Movie(model.Model, Storm):
 
     __metaclass__ = model.MambaStorm
     __storm_table__ = 'movies'
-    __mamba_schema__ = False
 
     __media_type__ = 'MOVIE'
 
-    movie_id = Int(primary=True, size=11, auto_increment=True)
+    id = Int(primary=True, size=11, auto_increment=True)
     torrent_queue_id = Int(size=11)
     name = Unicode(size=256)
-    dvd_release = DateTime()
-    theater_release = DateTime()
-    rating = Int()
+    dvd_release = DateTime(default=None)
+    theater_release = DateTime(default=None)
+    rating = Int(default=None)
 
     # references
-    torrent_queue = Reference(
-        torrent_queue_id, 'TorrentQueue.torrent_queue_id'
-    )
+    torrent_queue = Reference(torrent_queue_id, 'TorrentQueue.id')
 
     def __init__(self, **kwargs):
         for key, value in kwargs.iteritems():
@@ -80,4 +77,4 @@ class Movie(model.Model, Storm):
         queue.date_added = datetime.datetime.now()
         queue.create()
 
-        return queue.torrent_queue_id
+        return queue.id

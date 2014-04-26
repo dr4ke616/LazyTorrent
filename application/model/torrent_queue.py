@@ -25,19 +25,18 @@ class TorrentQueue(model.Model, Storm):
 
     __metaclass__ = model.MambaStorm
     __storm_table__ = 'torrent_queue'
-    __mamba_schema__ = False
 
-    torrent_queue_id = Int(primary=True, size=10, auto_increment=True)
+    id = Int(primary=True, size=11, auto_increment=True)
     media_type = NativeEnum(set={'MOVIE', 'TV_SHOW'})
     query = Unicode(size=256)
-    download_when = DateTime(default=datetime.now())
+    download_when = DateTime()
     status = NativeEnum(
         set={
             'PENDING', 'FOUND', 'NOT_FOUND', 'FINISHED',
             'DOWNLOADING', 'WATCHED', 'DELETED'
         }
     )
-    date_added = DateTime(default=None)
+    date_added = DateTime()
     torrent_hash = Unicode(size=256, default=None)
 
     def __init__(self, **kwargs):
@@ -56,11 +55,10 @@ class TorrentQueue(model.Model, Storm):
         store.commit()
 
     def update_value(self, **kwargs):
-        """ Updates a given value using the torrent_queue_id """
+        """ Updates a given value using the id """
 
         result = TorrentQueue.find(
-            TorrentQueue.torrent_queue_id == self.torrent_queue_id,
-            async=False
+            TorrentQueue.id == self.id, async=False
         ).one()
 
         for key, value in kwargs.iteritems():

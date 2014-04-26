@@ -123,7 +123,7 @@ class TorrentMonitor(borg.Borg):
             req.load_torrents(
                 callback=self.on_torrents_found,
                 errback=self.error_finding_torrents,
-                db_id=torrent.torrent_queue_id
+                db_id=torrent.id
             )
 
     def on_torrents_found(self, torrents, db_id):
@@ -133,14 +133,14 @@ class TorrentMonitor(borg.Borg):
         """
 
         if len(torrents) > 0:
-            log.msg('Torrent found for torrent_queue_id: {}'.format(db_id))
+            log.msg('Torrent found for queue with id of {}'.format(db_id))
 
             self.download_manager.download(torrents[0], db_id)
         else:
-            log.msg('No Torrents found for torrent_queue_id: {}'.format(db_id))
+            log.msg('No Torrents found for queue with id of {}'.format(db_id))
 
             TorrentQueue.update_status(
-                new_status='NOT_FOUND', torrent_queue_id=db_id, async=False
+                new_status='NOT_FOUND', id=db_id, async=False
             )
             self.error_finding_torrents()
 
