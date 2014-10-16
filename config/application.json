@@ -15,7 +15,7 @@
     "max_retries": 3,
     "pirate_bay_hosts": [
         {
-            "host": "suprbay.net",
+            "host": "proxybay.pw",
             "torrent_host": "torrents.thepiratebay.se",
             "use_tor_network": false
         },
