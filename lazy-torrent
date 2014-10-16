@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+if [ "$1" = "start" ] ; then
+    sudo service tor stop
+    sudo service transmission-daemon stop
+    mamba-admin start
+    exit
+fi
+
+if [ "$1" = "stop" ] ; then
+    mamba-admin stop
+    exit
+fi
+
+echo "Usage:"
+echo -e "\tlazy-torrent start"
+echo -e "\tlazy-torrent stop"
