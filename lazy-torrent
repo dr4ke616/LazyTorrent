@@ -2,9 +2,15 @@
 
 
 if [ "$1" = "start" ] ; then
+
     sudo service tor stop
+    sleep 1.0
+
     sudo service transmission-daemon stop
+    sleep 1.0
+
     mamba-admin start
+
     exit
 fi
 
@@ -13,6 +19,12 @@ if [ "$1" = "stop" ] ; then
     exit
 fi
 
+if [ "$1" = "restart" ] ; then
+    mamba-admin restart
+    exit
+fi
+
 echo "Usage:"
 echo -e "\tlazy-torrent start"
 echo -e "\tlazy-torrent stop"
+echo -e "\tlazy-torrent restart"
